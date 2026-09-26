@@ -50,6 +50,9 @@ ota:
   - platform: esphome
     encryption: # reuses the api encryption key; no separate password
 
+network:
+  enable_ipv6: true # Thread is IPv6-only
+
 openthread:
   device_type: FTD # phase 2: MTD + poll_period: 1000ms
   channel: !secret thread_channel
