@@ -1,46 +1,62 @@
 # Sleepy-end-device bisect — 2026-09-26
 
-Phase 1 (FTD over Thread) works. Phase 2 (sleepy + light sleep) does not.
-Bisected on the bench board (XIAO ESP32-C6, MAC …13:79:FC), ESPHome 2026.9.0,
-ESP-IDF 5.5.5, all flashed over USB with the **onboard ceramic antenna**
-unless noted. "Attach" = `[openthread] SRP client has started` appears.
+Phase 1 (FTD over Thread) works; the sleepy build does not. Bisected on the
+bench board (XIAO ESP32-C6, MAC …13:79:FC), ESPHome 2026.9.0, ESP-IDF 5.5.5,
+flashed over USB. "Attach" = `[openthread] SRP client has started`.
 
-| Config | device_type | poll_period | esp32_pm | Result |
-|---|---|---|---|---|
-| `tealight-c6-thread.yaml` | FTD | — | no | **attaches** in ~40 s; HA connects (16:10, 16:18, and 15:02 via Device Builder) |
-| `bisect-b-ftd-pm.yaml` | FTD | — | **yes** | no attach in 150 s |
-| `bisect-c-mtd-runtime.yaml` | **MTD** | at runtime | no | no attach in 170 s |
-| `bisect-a-sed-nopm.yaml` | **MTD** | 1000 ms | no | no attach in 150 s |
-| `tealight-c6-thread-sed.yaml` | **MTD** | at runtime | **yes** | no attach in 170 s (tried both antenna settings) |
+## Finding 1: the external U.FL antenna path is dead
 
-**Two independent blockers**, either one enough to prevent the attach:
+The pigtail is physically attached, but the *same* known-good FTD firmware
+attaches on the onboard ceramic antenna and **never** attaches with
+`external_antenna: true`. Suspect an unseated U.FL connector or a bad
+pigtail/antenna. The finished candle uses the onboard antenna anyway.
 
-1. **`device_type: MTD`** — never attaches, with or without `poll_period`,
-   with or without power management. Only the FTD builds ever attach.
-2. **`esp32_pm`** (PR [#12325](https://github.com/esphome/esphome/pull/12325))
-   — an otherwise-identical FTD build stops attaching once the component is
-   added. Note light sleep should not even engage while USB is connected
-   (`CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION`), so the cause is more likely
-   something else it sets: `CONFIG_IEEE802154_SLEEP_ENABLE=y`, or CPU
-   frequency scaling down to `min_frequency: 40MHz` breaking 802.15.4 timing.
+An earlier round of this bisect was run on that dead path and its results were
+wrong; everything below is on the **onboard antenna**.
 
-**Alternative explanation not yet ruled out: marginal RF.** One FTD run logged
-`SRP client reported an error: ResponseTimeout` right after attaching, which
-suggests the link to the OTBR is not strong. An FTD attaches more
-aggressively than an MTD, which must find and hold a parent — so a weak link
-could produce exactly this FTD-works/MTD-fails split without either component
-being at fault.
+## Finding 2: `device_type: MTD` is the only blocker
 
-## Next experiments (cheapest first)
+| device_type | poll_period | esp32_pm | Attach? |
+|---|---|---|---|
+| FTD | — | no | **yes** (~40 s; 15:02, 16:10, 16:18) |
+| FTD | — | **yes** | **yes** (17:05) |
+| MTD | at runtime | no | no (170 s) |
+| MTD | 1000 ms | no | no (150 s) |
+| MTD | at runtime | **yes** | no (170 s) |
 
-1. **Move the board next to the HA server / OTBR and retry MTD.** Settles the
-   RF hypothesis before any more firmware work. Also try the U.FL antenna,
-   confirming first that the pigtail is actually on *this* board.
-2. **PM with frequency scaling disabled**: `min_frequency: 160MHz` (or drop
-   `enable_light_sleep`) on an FTD, to find which sdkconfig option breaks it.
-3. If MTD still fails next to the border router, it is an ESPHome/OpenThread
-   issue worth reporting upstream with these logs.
+So the [esp32_pm PR](https://github.com/esphome/esphome/pull/12325) is fine —
+light sleep is available to us. **`device_type: MTD` never attaches**, with or
+without polling or power management, with the OTBR (SLZB dongle) ~10 ft away.
 
-Until one of these lands, the bench board stays on `tealight-c6-thread.yaml`
-(FTD, radio always on) so it remains usable in HA — at ~20–40 mA, i.e. no
-battery saving yet. **The week-long battery target is unproven.**
+This matters because MTD is not optional: an FTD keeps its radio in RX
+permanently (tens of mA), so light sleep alone saves little. The radio has to
+sleep, and only an MTD/SED can do that.
+
+## Next step
+
+`SRP client has started` is our only attach indicator, so we cannot yet tell
+"never attached" from "attached as a child, but SRP failed". Log the
+OpenThread role directly to separate them:
+
+```yaml
+interval:
+  - interval: 10s
+    then:
+      - lambda: ESP_LOGI("ot", "role=%d", otThreadGetDeviceRole(esp_openthread_get_instance()));
+```
+
+Roles: 0 disabled, 1 detached, 2 child, 3 router, 4 leader. A steady `2` means
+the MTD *is* attaching and the problem is SRP/mDNS; a steady `1` means it
+genuinely cannot find a parent, which is an ESPHome/OpenThread issue worth
+reporting upstream with these logs.
+
+Meanwhile the bench board stays on `tealight-c6-thread.yaml` (FTD) so it is
+usable in HA at ~20–40 mA. **The week-long battery target remains unproven.**
+
+## On writing our own power-management component
+
+Not needed. ESPHome's `esp32:` block accepts raw `sdkconfig_options` (user
+values take precedence), and the runtime half is one `esp_pm_configure()` call
+from an `on_boot` lambda — about fifteen lines, no external component, and
+each knob can be toggled independently. Worth doing only if we later want to
+drop the PR dependency.
