@@ -23,10 +23,12 @@ esphome:
   # The XIAO ESP32-C6 has an RF switch between the chip and its antennas.
   # Until GPIO3 is driven low the radio is connected to nothing ("No
   # networks found"). GPIO14 low = onboard ceramic antenna, high = U.FL.
-  # Priority 600 runs after GPIO setup (800) and before Wi-Fi (250).
+  # Runs after everything else has booted (priority -100) and restarts
+  # Wi-Fi so the PHY re-initialises with an antenna actually connected.
   on_boot:
-    priority: 600
+    priority: -100
     then:
+      - wifi.disable:
       - output.turn_off: rf_switch_enable
       - if:
           condition:
@@ -35,6 +37,8 @@ esphome:
             - output.turn_on: antenna_select
           else:
             - output.turn_off: antenna_select
+      - delay: 100ms
+      - wifi.enable:
 
 esp32:
   board: seeed_xiao_esp32c6

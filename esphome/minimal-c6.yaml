@@ -1,11 +1,31 @@
 # Bench bisect config: bare Wi-Fi + logger on the XIAO ESP32-C6.
-# No lights, ADC, deep sleep, power-save or antenna handling. If this
+# No lights, ADC, deep sleep or power-save — only the antenna switch
+# handling, which the XIAO C6 needs for the radio to see anything. If this
 # connects, add sections from tealight-c6.yaml back one at a time.
 #
 #   esphome run minimal-c6.yaml
 
 esphome:
   name: tealight-min
+  # XIAO C6 RF switch: GPIO3 low = switch powered, GPIO14 low = onboard
+  # ceramic antenna / high = U.FL. Runs after Wi-Fi has come up (priority
+  # -100) and restarts it so the PHY re-initialises with an antenna attached.
+  on_boot:
+    priority: -100
+    then:
+      - wifi.disable:
+      - output.turn_off: rf_switch_enable
+      - output.turn_off: antenna_select # turn_on for the external U.FL antenna
+      - delay: 100ms
+      - wifi.enable:
+
+output:
+  - platform: gpio
+    id: rf_switch_enable
+    pin: GPIO3
+  - platform: gpio
+    id: antenna_select
+    pin: GPIO14
 
 esp32:
   board: seeed_xiao_esp32c6
