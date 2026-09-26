@@ -29,7 +29,7 @@ substitutions:
   external_antenna: "false"
   # With name_add_mac_suffix the dashboard would look for ${name}.local, which
   # doesn't exist. Give it the real hostname (or the fd99:… IPv6 address).
-  use_address: tealight-thread-1379fc.local
+  use_address: tealight-sed-1379fc.local
 
 esphome:
   name: ${name}
