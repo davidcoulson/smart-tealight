@@ -13,6 +13,8 @@ substitutions:
   # Brightness cap for the ring (battery + charger protection). 40 % of 8
   # full-white LEDs is still ~160 mA.
   ring_cap: 40%
+  # "true" = U.FL external antenna (bench board), "false" = onboard ceramic
+  external_antenna: "false"
 
 esphome:
   name: ${name}
@@ -26,7 +28,13 @@ esphome:
     priority: 600
     then:
       - output.turn_off: rf_switch_enable
-      - output.turn_off: antenna_select
+      - if:
+          condition:
+            lambda: "return ${external_antenna};"
+          then:
+            - output.turn_on: antenna_select
+          else:
+            - output.turn_off: antenna_select
 
 esp32:
   board: seeed_xiao_esp32c6
