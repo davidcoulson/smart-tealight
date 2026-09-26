@@ -7,7 +7,7 @@ Wi-Fi is fine — or Thread for consistency), different body:
 
 * **Base:** printed in **PC-FR** (or PC-CF/ABS-FR), carrying an E26 screw
   shell (buy a bulb-repair E26 base) and an **encapsulated, UL-recognised
-  AC/DC module** — Mean Well IRM-10-5 / IRM-20-5 (see Power) — so the printed
+  AC/DC module** (HLK-10M05, see Power) so the printed
   part only provides mechanics and spacing, never insulation on its own.
   Creepage ≥ 4 mm between mains and low voltage, strain relief on the
   E26 leads, and the module's own thermal limits respected (a T19 in an
@@ -19,8 +19,13 @@ Wi-Fi is fine — or Thread for consistency), different body:
   printed core, LEDs facing out; XIAO inside the core. Worst-case white
   ~4 A → cap brightness at ~35 % in firmware. Same reel as the tea light's
   strip option.
-* **Power:** 5 V, so the AC/DC module is a Mean Well IRM-10-5 (2 A) or
-  IRM-20-5 (4 A); the XIAO runs from 5 V directly, no buck.
+* **Power:** 5 V from a **Hi-Link HLK-10M05** (5 V 2 A, 47 × 28 × 22 mm,
+  ordered 2026-09-26) standing vertically in the base; the XIAO runs from
+  5 V directly, no buck. Design point ≤ 1.5 A continuous (the module gets
+  hot near 2 A in a closed body), brightness capped in firmware. Add a 1 A
+  slow-blow fuse / fusible resistor on the AC input — the module has none.
+  470–1000 µF across the 5 V rail; feed the six LED columns from a common
+  5 V ring at the base, not daisy-chained.
 * **Diffuser:** translucent PETG tube, Ø57, or a frosted acrylic tube.
 * **Effects:** ESPHome addressable_flicker per column with a vertical
   brightness gradient (bright at the bottom, dim at the top) reads as flame.
