@@ -1,0 +1,17 @@
+# XIAO ESP32-C6 overrides for esp-matter examples/light (append after
+# sdkconfig.defaults;sdkconfig.defaults.c6_thread).
+
+# Bench: no button wired yet, use the XIAO's BOOT button (GPIO9, active low)
+CONFIG_BSP_BUTTONS_NUM=1
+CONFIG_BSP_BUTTON_1_TYPE_GPIO=y
+CONFIG_BSP_BUTTON_1_GPIO=9
+CONFIG_BSP_BUTTON_1_LEVEL=0
+
+# Addressable LED on D4 = GPIO22 (the tea light's ring data pin)
+CONFIG_BSP_LEDS_NUM=1
+CONFIG_BSP_LED_TYPE_RGB=y
+CONFIG_BSP_LED_RGB_GPIO=22
+CONFIG_BSP_LED_RGB_BACKEND_RMT=y
+
+# Console on the USB-Serial/JTAG port like ESPHome
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

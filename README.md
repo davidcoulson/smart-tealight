@@ -31,7 +31,7 @@ figures are estimates to be measured on the first prototype.
 ```
 docs/       design notes, schematic and its generator
 esphome/    Track A ESPHome config (XIAO ESP32-C6)
-firmware/   Track B Zephyr / Matter firmware (to come)
+firmware/   Track B: matter-thread-test/ (stock esp-matter light on the C6), then the real app
 hardware/   3D-printable body, later a custom LED PCB (to come)
 ```
 
