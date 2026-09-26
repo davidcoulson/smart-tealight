@@ -110,15 +110,17 @@ sensor:
       - sliding_window_moving_average:
           window_size: 4
           send_every: 2
+    # Below ~2.5 V nothing is connected to D0 (bench / USB-only), so the
+    # low-battery rules must not fire — otherwise the board sleeps forever.
     on_value:
       - if:
           condition:
-            lambda: "return x < 3.5;"
+            lambda: "return x > 2.5 && x < 3.5;"
           then:
             - light.turn_off: ring
       - if:
           condition:
-            lambda: "return x < 3.4;"
+            lambda: "return x > 2.5 && x < 3.4;"
           then:
             - light.turn_off: candle
             - deep_sleep.enter: ship_mode
