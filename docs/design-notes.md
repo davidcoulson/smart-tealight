@@ -37,6 +37,28 @@ Your HA already has what the Thread path needs: the **Matter** and
 **OpenThread Border Router** integrations are loaded, plus the Thread
 integration.
 
+### Update 2026-09-26 (later): ESPHome over Thread works — Matter dropped
+
+Tested the same evening: ESPHome's native **`openthread`** component on the
+XIAO C6 attached to the HA OTBR network, registered via SRP, and HA's
+ESPHome integration connected to it over Thread (connections arrive from
+the OTBR's `wpan0` address; the firmware has no Wi-Fi compiled in). Lights
+toggle from HA. So the finished device stays on **ESPHome YAML** — same
+entities, effects and OTA — with Thread as the transport. No ESP-Matter,
+no C firmware.
+
+Battery: `device_type: MTD` + `poll_period` makes it a sleepy end device
+(radio sleeps; ~17 mA today because the CPU stays awake). The
+[esp32_pm power-management PR](https://github.com/esphome/esphome/pull/12325)
+adds light sleep and was measured at **105 µA average on a C6 running
+openthread SED** — that's the missing piece, usable via `external_components`
+from the PR branch until it merges. OTA on a sleepy device needs the
+`openthread.set_poll_period` action (merged) to wake the radio first.
+
+Config: [`esphome/tealight-c6-thread.yaml`](../esphome/tealight-c6-thread.yaml).
+The ESP-Matter procedure in `firmware/matter-thread-test/` is kept as a
+fallback only.
+
 ### Update 2026-09-26: the ESP32-C6 can do Matter over Thread too
 
 The C6 has an 802.15.4 radio, so the same XIAO ESP32-C6 can run

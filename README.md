@@ -10,9 +10,9 @@ Seeed XIAO module, controlled from Home Assistant.
 * **Two firmware tracks on the same hardware:**
   * *Track A* — XIAO ESP32-C6 + [ESPHome](esphome/tealight-c6.yaml). Quick to
     build, ~½ day on battery because Wi-Fi stays associated. For prototyping.
-  * *Track B* — the same XIAO ESP32-C6 + [ESP-Matter](https://github.com/espressif/esp-matter),
-    Matter over Thread as a sleepy end device. Weeks of standby. The real
-    device. (Not started yet.) A XIAO nRF54L15 + Zephyr port is a stretch option.
+  * *Track B* — the same XIAO ESP32-C6, [ESPHome over Thread](esphome/tealight-c6-thread.yaml)
+    via the HA OpenThread Border Router. **Working on the bench (2026-09-26).**
+    Next: sleepy end device + light sleep for weeks of standby.
 
 **Status: design stage.** No hardware has been built; all current and battery
 figures are estimates to be measured on the first prototype.
@@ -31,7 +31,7 @@ figures are estimates to be measured on the first prototype.
 ```
 docs/       design notes, schematic and its generator
 esphome/    Track A ESPHome config (XIAO ESP32-C6)
-firmware/   Track B: matter-thread-test/ (stock esp-matter light on the C6), then the real app
+firmware/   fallback only: matter-thread-test/ (ESP-Matter procedure, not used)
 hardware/   3D-printable body, later a custom LED PCB (to come)
 ```
 
