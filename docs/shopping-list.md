@@ -24,7 +24,7 @@ are per *pack* — one pack of each covers many candles.
 | SOT-23 → SIP-3 adapter | [Chironal 50 pcs B07MQBF2DD](https://www.amazon.com/dp/B07MQBF2DD) | 3-in-a-row pinout, exactly what the perfboard layout assumes (pads B9/C9/D9) |
 | 0805 resistor kit | [Chanzon 1200 pcs / 60 values B08RYMY6XK](https://www.amazon.com/dp/B08RYMY6XK) | covers 82, 100, 330, 1k, 100k, 220k (200k also fine for the divider — just use two of the same) |
 | 100 µF 6.3 V tantalum, B (3528) | [Fielect 50 pcs B08BYM7GR8](https://www.amazon.com/dp/B08BYM7GR8) | C1; 3.5 mm body bridges two adjacent pads. Mind polarity (stripe = +) |
-| 3 mm warm-white LED, flat-top wide angle | [Dollhouse diffused 20 pcs B017TRGG3Q](https://www.amazon.com/dp/B017TRGG3Q) | ~3000 K, 105–115° beam — better candle glow than a 30° clear LED |
+| 3 mm warm-white LED, flat-top | [EDGELEC 100 pcs B077XBVZ5Y](https://www.amazon.com/dp/B077XBVZ5Y) | ~3000 K, wide beam, 29 mm leads. Ignore the bundled 6–12 V resistors; use 82 Ω from the kit. Long lead = anode → D4 |
 | 6×6×5 mm tact switch | [Taiss 100 pcs B0796QHL5Z](https://www.amazon.com/dp/B0796QHL5Z) | SW1, off-board at the base |
 | 30 AWG silicone wire, 6 colours | [TUOFENG B07G2SWB19](https://www.amazon.com/dp/B07G2SWB19) | all the underside jumpers |
 | Kapton tape 10 mm | [GoGoRc B0CJQ544H8](https://www.amazon.com/dp/B0CJQ544H8) | under the XIAO |
