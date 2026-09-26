@@ -21,6 +21,7 @@ figures are estimates to be measured on the first prototype.
 
 * [Design notes](docs/design-notes.md) — prior art, power budget, mechanical
   stack, pin plan, bill of materials (Amazon US), firmware behaviour, next steps
+* [Shopping list](docs/shopping-list.md) — Amazon US listings for every part
 * [Wiring schematic](docs/wiring.svg) and [perfboard layout](docs/perfboard.svg) (generators alongside)
 
 ![Wiring](docs/wiring.png)
