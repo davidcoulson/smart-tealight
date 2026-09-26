@@ -1,0 +1,225 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1150 1060" width="1150" height="1060" font-family="Helvetica, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="40" y="38" font-size="20" text-anchor="start" fill="#222" font-weight="bold">Smart tea light — wiring (Track A: XIAO ESP32-C6)</text>
+<text x="40" y="60" font-size="13" text-anchor="start" fill="#666" font-weight="normal">Same wiring for XIAO nRF54L15, except the D0 battery divider (built in on the nRF54L15)</text>
+<rect x="60" y="110" width="170" height="770" rx="10" fill="#e8f0fe" stroke="#1565c0" stroke-width="2.5"/>
+<text x="145.0" y="140" font-size="16" text-anchor="middle" fill="#1565c0" font-weight="bold">Seeed XIAO</text>
+<text x="145.0" y="160" font-size="12" text-anchor="middle" fill="#1565c0" font-weight="normal">ESP32-C6 / nRF54L15</text>
+<rect x="48" y="190" width="14" height="44" rx="3" fill="#bbb" stroke="#666"/>
+<text x="70" y="216" font-size="11" text-anchor="start" fill="#666" font-weight="normal">USB-C</text>
+<text x="70" y="230" font-size="10" text-anchor="start" fill="#666" font-weight="normal">(charge/flash)</text>
+<circle cx="230" cy="180" r="4" fill="#1565c0"/>
+<text x="222" y="184" font-size="13" text-anchor="end" fill="#1565c0" font-weight="bold">D0</text>
+<text x="222" y="198" font-size="10" text-anchor="end" fill="#666" font-weight="normal">GPIO0</text>
+<circle cx="230" cy="300" r="4" fill="#1565c0"/>
+<text x="222" y="304" font-size="13" text-anchor="end" fill="#1565c0" font-weight="bold">D1</text>
+<text x="222" y="318" font-size="10" text-anchor="end" fill="#666" font-weight="normal">GPIO1</text>
+<circle cx="230" cy="470" r="4" fill="#1565c0"/>
+<text x="222" y="474" font-size="13" text-anchor="end" fill="#1565c0" font-weight="bold">D2</text>
+<text x="222" y="488" font-size="10" text-anchor="end" fill="#666" font-weight="normal">GPIO2</text>
+<circle cx="230" cy="720" r="4" fill="#1565c0"/>
+<text x="222" y="724" font-size="13" text-anchor="end" fill="#1565c0" font-weight="bold">D3</text>
+<text x="222" y="738" font-size="10" text-anchor="end" fill="#666" font-weight="normal">GPIO21</text>
+<circle cx="230" cy="840" r="4" fill="#1565c0"/>
+<text x="222" y="844" font-size="13" text-anchor="end" fill="#1565c0" font-weight="bold">D4</text>
+<text x="222" y="858" font-size="10" text-anchor="end" fill="#666" font-weight="normal">GPIO22</text>
+<text x="145.0" y="850" font-size="11" text-anchor="middle" fill="#666" font-weight="normal">battery pads</text>
+<text x="145.0" y="863" font-size="11" text-anchor="middle" fill="#666" font-weight="normal">(underside)</text>
+<circle cx="110" cy="880" r="4" fill="#c62828"/>
+<text x="110" y="875" font-size="1" text-anchor="start" fill="#222" font-weight="normal"></text>
+<circle cx="190" cy="880" r="4" fill="#222"/>
+<text x="190" y="875" font-size="1" text-anchor="start" fill="#222" font-weight="normal"></text>
+<text x="104" y="898" font-size="11" text-anchor="end" fill="#c62828" font-weight="bold">BAT+</text>
+<text x="196" y="898" font-size="11" text-anchor="start" fill="#222" font-weight="bold">BAT−</text>
+<polyline points="110,880 110,940" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="190,880 190,940" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="80" y="940" width="140" height="55" rx="6" fill="#fff8e1" stroke="#ef6c00" stroke-width="2"/>
+<text x="150" y="962" font-size="12" text-anchor="middle" fill="#222" font-weight="bold">LiPo 3.7 V ~400 mAh</text>
+<text x="150" y="980" font-size="11" text-anchor="middle" fill="#666" font-weight="normal">802030, protected, JST</text>
+<text x="96" y="935" font-size="15" text-anchor="middle" fill="#c62828" font-weight="bold">+</text>
+<text x="204" y="935" font-size="15" text-anchor="middle" fill="#222" font-weight="bold">−</text>
+<circle cx="110" cy="915" r="4" fill="#c62828"/>
+<polyline points="190,905 190,915" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="176,915 204,915" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="181,920 199,920" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="186,925 194,925" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="190" cy="905" r="4" fill="#222"/>
+<polyline points="230,180 340,180" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="340" cy="180" r="4" fill="#222"/>
+<polyline points="340,90 340,117.0" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="340,153.0 340,180" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="333" y="117.0" width="14" height="36" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="352" y="140.0" font-size="12" text-anchor="start" fill="#222" font-weight="normal">R1 220k</text>
+<polyline points="340,90 340,82" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="333,82 347,82 340,72" fill="#c62828"/>
+<text x="340" y="68" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">BAT+</text>
+<polyline points="340,180 340,202.0" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="340,238.0 340,260" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="333" y="202.0" width="14" height="36" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="352" y="225.0" font-size="12" text-anchor="start" fill="#222" font-weight="normal">R2 220k</text>
+<polyline points="340,260 340,270" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="326,270 354,270" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="331,275 349,275" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="336,280 344,280" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<line x1="400" y1="180" x2="400" y2="180" />
+<text x="415" y="150" font-size="13" text-anchor="start" fill="#222" font-weight="bold">Battery sense (C6 only)</text>
+<text x="415" y="166" font-size="12" text-anchor="start" fill="#666" font-weight="normal">halves 4.2 V → 2.1 V for the ADC</text>
+<text x="415" y="182" font-size="12" text-anchor="start" fill="#666" font-weight="normal">optional 100 nF across R2</text>
+<polyline points="230,300 320,300" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="320" cy="300" r="3" fill="#fff" stroke="#222" stroke-width="2"/><circle cx="370" cy="300" r="3" fill="#fff" stroke="#222" stroke-width="2"/>
+<polyline points="322,296 366,284" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="344,290 344,276" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="334,276 354,276" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="373,300 400,300" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="400,300 400,310" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="386,310 414,310" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="391,315 409,315" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="396,320 404,320" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<text x="430" y="294" font-size="13" text-anchor="start" fill="#222" font-weight="bold">SW1 6×6 tact switch → GND</text>
+<text x="430" y="310" font-size="12" text-anchor="start" fill="#666" font-weight="normal">internal pull-up; tap = candle on/off, hold 2 s = ship mode, wakes from deep sleep</text>
+<polyline points="230,470 317.0,470" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="353.0,470 440,470" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="317.0" y="463" width="36" height="14" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="335.0" y="458" font-size="12" text-anchor="middle" fill="#222" font-weight="normal">100 Ω</text>
+<circle cx="440" cy="470" r="4" fill="#222"/>
+<polyline points="440,470 440,487.0" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="440,523.0 440,540" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="433" y="487.0" width="14" height="36" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="452" y="510.0" font-size="12" text-anchor="start" fill="#222" font-weight="normal"></text>
+<text x="390" y="515" font-size="12" text-anchor="start" fill="#222" font-weight="normal">100k</text>
+<polyline points="440,540 440,550" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="426,550 454,550" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="431,555 449,555" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="436,560 444,560" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="440,470 502,470" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="526" cy="470" r="24" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<polyline points="502,470 512,470" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="512,458 512,482" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,456 518,484" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,460 534,460 534,445" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,480 534,480 534,495" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="519,480 527,476 527,484" fill="#222"/>
+<text x="554" y="466" font-size="12" text-anchor="start" fill="#222" font-weight="bold">Q3</text>
+<text x="554" y="481" font-size="11" text-anchor="start" fill="#666" font-weight="normal">AO3400 (N)</text>
+<polyline points="534,495 534,515" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="534,515 534,525" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="520,525 548,525" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="525,530 543,530" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="530,535 538,535" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="534,445 534,425 594,425" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="606,415 606,435 621,425" fill="#fff59d" stroke="#222" stroke-width="2"/>
+<polyline points="621,415 621,435" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="621,425 639,425" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="611,411 619,401" fill="none" stroke="#ef6c00" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="619,413 627,403" fill="none" stroke="#ef6c00" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="639,425 661.0,425" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="697.0,425 719,425" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="661.0" y="418" width="36" height="14" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="679.0" y="413" font-size="12" text-anchor="middle" fill="#222" font-weight="normal">82 Ω</text>
+<polyline points="719,425 739,425" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="739,425 739,417" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="732,417 746,417 739,407" fill="#c62828"/>
+<text x="739" y="403" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">BAT+</text>
+<text x="654" y="455" font-size="13" text-anchor="start" fill="#222" font-weight="bold">Warm-white candle LED (low-power mode)</text>
+<text x="654" y="471" font-size="12" text-anchor="start" fill="#666" font-weight="normal">2200–2700 K, ~10 mA at 3.7 V; PWM on D2</text>
+<text x="654" y="487" font-size="12" text-anchor="start" fill="#666" font-weight="normal">sits in the ring's centre hole</text>
+<polyline points="230,720 317.0,720" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="353.0,720 440,720" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="317.0" y="713" width="36" height="14" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="335.0" y="708" font-size="12" text-anchor="middle" fill="#222" font-weight="normal">1k</text>
+<circle cx="440" cy="720" r="4" fill="#222"/>
+<polyline points="440,720 440,732.0" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="440,768.0 440,780" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="433" y="732.0" width="14" height="36" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="452" y="755.0" font-size="12" text-anchor="start" fill="#222" font-weight="normal"></text>
+<text x="390" y="755" font-size="12" text-anchor="start" fill="#222" font-weight="normal">100k</text>
+<polyline points="440,780 440,790" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="426,790 454,790" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="431,795 449,795" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="436,800 444,800" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="440,720 502,720" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="526" cy="720" r="24" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<polyline points="502,720 512,720" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="512,708 512,732" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,706 518,734" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,710 534,710 534,695" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="518,730 534,730 534,745" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="519,730 527,726 527,734" fill="#222"/>
+<text x="554" y="716" font-size="12" text-anchor="start" fill="#222" font-weight="bold">Q2</text>
+<text x="554" y="731" font-size="11" text-anchor="start" fill="#666" font-weight="normal">2N7002 (N)</text>
+<polyline points="534,745 534,760" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="534,760 534,770" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="520,770 548,770" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="525,775 543,775" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="530,780 538,780" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="534,695 534,645" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="534" cy="645" r="4" fill="#222"/>
+<polyline points="534,580 534,594.5" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="534,630.5 534,645" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="527" y="594.5" width="14" height="36" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="546" y="617.5" font-size="12" text-anchor="start" fill="#222" font-weight="normal"></text>
+<text x="484" y="617" font-size="12" text-anchor="start" fill="#222" font-weight="normal">100k</text>
+<polyline points="534,580 534,572" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="527,572 541,572 534,562" fill="#c62828"/>
+<text x="534" y="558" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">BAT+</text>
+<polyline points="534,645 594,645" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="618" cy="645" r="24" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<polyline points="594,645 604,645" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="604,633 604,657" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="610,631 610,659" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="610,635 626,635 626,620" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="610,655 626,655 626,670" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="620,635 612,631 612,639" fill="#222"/>
+<text x="646" y="641" font-size="12" text-anchor="start" fill="#222" font-weight="bold">Q1</text>
+<text x="646" y="656" font-size="11" text-anchor="start" fill="#666" font-weight="normal">AO3401A (P)</text>
+<polyline points="626,620 626,600" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="626,600 626,592" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="619,592 633,592 626,582" fill="#c62828"/>
+<text x="626" y="578" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">BAT+</text>
+<polyline points="626,670 626,690 800,690" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<text x="636" y="682" font-size="11" text-anchor="start" fill="#c62828" font-weight="normal">switched LED rail</text>
+<circle cx="720" cy="690" r="4" fill="#c62828"/>
+<polyline points="720,690 720,712" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="706,712 734,712" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="706,720 734,720" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="720,720 720,732" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="720,732 720,742" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="706,742 734,742" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="711,747 729,747" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="716,752 724,752" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<text x="738" y="722" font-size="12" text-anchor="start" fill="#222" font-weight="normal">100 µF</text>
+<polyline points="230,840 377.0,840" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="413.0,840 560,840" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="377.0" y="833" width="36" height="14" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="395.0" y="828" font-size="12" text-anchor="middle" fill="#222" font-weight="normal">330 Ω</text>
+<polyline points="560,840 800,840" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linejoin="round"/>
+<text x="580" y="858" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="normal">data (hold LOW when rail is off)</text>
+<circle cx="960" cy="800" r="95" fill="#fafafa" stroke="#222" stroke-width="2"/><circle cx="960" cy="800" r="45" fill="#fff" stroke="#666" stroke-width="1.5"/>
+<rect x="951.0" y="721.0" width="18" height="18" rx="2" fill="#e53935" opacity="0.85" stroke="#222"/>
+<rect x="1000.4974746830583" y="741.5025253169417" width="18" height="18" rx="2" fill="#fb8c00" opacity="0.85" stroke="#222"/>
+<rect x="1021.0" y="791.0" width="18" height="18" rx="2" fill="#fdd835" opacity="0.85" stroke="#222"/>
+<rect x="1000.4974746830583" y="840.4974746830583" width="18" height="18" rx="2" fill="#43a047" opacity="0.85" stroke="#222"/>
+<rect x="951.0" y="861.0" width="18" height="18" rx="2" fill="#1e88e5" opacity="0.85" stroke="#222"/>
+<rect x="901.5025253169417" y="840.4974746830583" width="18" height="18" rx="2" fill="#8e24aa" opacity="0.85" stroke="#222"/>
+<rect x="881.0" y="791.0" width="18" height="18" rx="2" fill="#e53935" opacity="0.85" stroke="#222"/>
+<rect x="901.5025253169416" y="741.5025253169417" width="18" height="18" rx="2" fill="#fb8c00" opacity="0.85" stroke="#222"/>
+<text x="960" y="796" font-size="12" text-anchor="middle" fill="#222" font-weight="bold">8× WS2812B</text>
+<text x="960" y="812" font-size="11" text-anchor="middle" fill="#666" font-weight="normal">32 mm ring</text>
+<text x="960" y="915" font-size="11" text-anchor="middle" fill="#666" font-weight="normal">(or SK6812 RGBW/RGBWW)</text>
+<polyline points="800,690 840,690 850,745" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"/>
+<text x="806" y="682" font-size="12" text-anchor="start" fill="#c62828" font-weight="bold">VDD</text>
+<polyline points="800,840 840,840 848,850" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linejoin="round"/>
+<text x="806" y="832" font-size="12" text-anchor="start" fill="#2e7d32" font-weight="bold">DIN</text>
+<polyline points="826,805 790,805" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<text x="800" y="800" font-size="12" text-anchor="start" fill="#222" font-weight="bold">GND</text>
+<polyline points="790,805 790,815" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="776,815 804,815" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="781,820 799,820" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="786,825 794,825" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+<rect x="620" y="90" width="510" height="95" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+<text x="634" y="114" font-size="12.5" text-anchor="start" fill="#222" font-weight="normal">Every ⏚ is one common GND (XIAO GND = battery −).</text>
+<text x="634" y="134" font-size="12.5" text-anchor="start" fill="#222" font-weight="normal">BAT+ is the cell’s positive terminal (3.0–4.2 V); it’s live while charging too.</text>
+<text x="634" y="154" font-size="12.5" text-anchor="start" fill="#222" font-weight="normal">D3 HIGH → Q2 on → Q1 gate pulled low → LED rail on. 100k pull-downs keep</text>
+<text x="634" y="174" font-size="12.5" text-anchor="start" fill="#222" font-weight="normal">the ring and warm LED off while the XIAO boots or sleeps.</text>
+<text x="1120" y="1045" font-size="11" text-anchor="end" fill="#666">tealight/wiring.svg — generated by wiring.py</text>
+</svg>

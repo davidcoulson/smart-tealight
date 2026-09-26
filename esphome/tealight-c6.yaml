@@ -1,0 +1,181 @@
+# Smart tea light — Track A prototype (XIAO ESP32-C6 + ESPHome)
+#
+# Wiring / pin plan: see ../README.md §5.
+# Battery life on Wi-Fi is ~half a day. This build is for proving out the
+# body, LEDs and effects; the week-long build is the nRF54L15 / Thread track.
+#
+# Copy per candle and change the substitutions, or use name_add_mac_suffix.
+
+substitutions:
+  name: tealight
+  friendly_name: Tealight
+  ring_leds: "8"
+  # Brightness cap for the ring (battery + charger protection). 40 % of 8
+  # full-white LEDs is still ~160 mA.
+  ring_cap: 40%
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret tealight_api_key
+
+ota:
+  - platform: esphome
+    password: !secret tealight_ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: LIGHT
+  output_power: 13dB
+
+# High-side switch for the addressable LEDs' supply (AO3401A + 2N7002).
+# ESPHome turns it on before the ring lights and off keep_on_time after it
+# goes dark — powered-but-black SK6812s draw ~1 mA each.
+power_supply:
+  - id: ring_rail
+    pin: GPIO21 # D3
+    enable_time: 5ms
+    keep_on_time: 2s
+
+output:
+  # Warm-white candle LED, low-side N-FET (AO3400).
+  - platform: ledc
+    id: warm_led
+    pin: GPIO2 # D2
+    frequency: 19531Hz
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: ring
+    name: Ring
+    pin: GPIO22 # D4
+    num_leds: ${ring_leds}
+    chipset: WS2812 # SK6812 RGBW(W): chipset SK6812 + is_rgbw: true
+    rgb_order: GRB
+    power_supply: ring_rail
+    color_correct: [$ring_cap, $ring_cap, $ring_cap]
+    restore_mode: ALWAYS_OFF
+    default_transition_length: 400ms
+    effects:
+      - addressable_flicker:
+          name: Candle
+          intensity: 8%
+      - addressable_rainbow:
+          name: Rainbow
+          speed: 5
+          width: ${ring_leds}
+      - addressable_twinkle:
+          name: Twinkle
+      - addressable_color_wipe:
+          name: Color wipe
+
+  # Low-power mode: the ring rail stays off, only the one warm LED runs.
+  - platform: monochromatic
+    id: candle
+    name: Candle
+    output: warm_led
+    gamma_correct: 2.2
+    restore_mode: ALWAYS_OFF
+    default_transition_length: 400ms
+    effects:
+      - flicker:
+          name: Flicker
+          alpha: 94%
+          intensity: 15%
+
+sensor:
+  # BAT+ -> 220k -> D0 -> 220k -> GND (the C6 has no on-board divider).
+  - platform: adc
+    id: vbat
+    name: Battery voltage
+    pin: GPIO0 # D0
+    attenuation: 12db
+    update_interval: 30s
+    filters:
+      - multiply: 2.0
+      - sliding_window_moving_average:
+          window_size: 4
+          send_every: 2
+    on_value:
+      - if:
+          condition:
+            lambda: "return x < 3.5;"
+          then:
+            - light.turn_off: ring
+      - if:
+          condition:
+            lambda: "return x < 3.4;"
+          then:
+            - light.turn_off: candle
+            - deep_sleep.enter: ship_mode
+
+  - platform: copy
+    source_id: vbat
+    name: Battery
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0
+    filters:
+      - calibrate_linear:
+          - 3.50 -> 0
+          - 4.15 -> 100
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+  - platform: wifi_signal
+    name: Wi-Fi signal
+    update_interval: 120s
+
+binary_sensor:
+  - platform: gpio
+    id: tap_button
+    name: Button
+    pin:
+      number: GPIO1 # D1, LP GPIO so it can also wake from deep sleep
+      mode: INPUT_PULLUP
+      inverted: true
+      allow_other_uses: true
+    on_click:
+      # Short press: toggle the low-power candle.
+      - min_length: 50ms
+        max_length: 600ms
+        then:
+          - light.toggle: candle
+      # Long press: ship / storage mode.
+      - min_length: 2s
+        max_length: 6s
+        then:
+          - light.turn_off: ring
+          - light.turn_off: candle
+          - deep_sleep.enter: ship_mode
+
+button:
+  - platform: template
+    name: Ship mode (wake with button)
+    on_press:
+      - light.turn_off: ring
+      - light.turn_off: candle
+      - deep_sleep.enter: ship_mode
+
+deep_sleep:
+  id: ship_mode
+  wakeup_pin:
+    number: GPIO1
+    mode: INPUT_PULLUP
+    inverted: true
+    allow_other_uses: true
