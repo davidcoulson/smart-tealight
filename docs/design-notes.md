@@ -37,6 +37,23 @@ Your HA already has what the Thread path needs: the **Matter** and
 **OpenThread Border Router** integrations are loaded, plus the Thread
 integration.
 
+### Update 2026-09-26: the ESP32-C6 can do Matter over Thread too
+
+The C6 has an 802.15.4 radio, so the same XIAO ESP32-C6 can run
+**Matter over Thread as a sleepy end device** using Espressif's
+[ESP-Matter SDK](https://github.com/espressif/esp-matter) (ESP-IDF, C/C++;
+not ESPHome, which has no Matter support and no Zigbee `light`). Measured
+standby for a tuned Matter light is ~50 µA average
+([tomasmcguinness](https://tomasmcguinness.com/2025/01/06/lowering-power-consumption-in-esp32-c6/)),
+~230 µA untuned — ≤40 mAh/week, so the week-long goal holds. Espressif's SED
+support is younger than Nordic's
+([esp-matter #478](https://github.com/espressif/esp-matter/issues/478)).
+
+**Revised plan: one board.** Track A stays ESPHome/Wi-Fi on the C6 for the
+prototype; Track B becomes ESP-Matter on the *same* C6 — no module swap. The
+nRF54L15 is now a stretch option (3–5× lower sleep floor, more mature Matter
+stack), not a requirement. The two-track table below is kept for reference.
+
 ### Recommendation: two tracks, one hardware design
 
 The XIAO boards share one footprint and pinout, so the body, LED board and
