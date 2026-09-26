@@ -8,15 +8,15 @@
 esphome:
   name: tealight-min
   # XIAO C6 RF switch: GPIO3 low = switch powered, GPIO14 low = onboard
-  # ceramic antenna / high = U.FL. Runs after Wi-Fi has come up (priority
-  # -100) and restarts it so the PHY re-initialises with an antenna attached.
+  # ceramic antenna / high = U.FL. Wi-Fi is held off at boot
+  # (enable_on_boot: false) so the PHY first initialises with the antenna
+  # already connected; priority 600 runs after the GPIO outputs (800).
   on_boot:
-    priority: -100
+    priority: 600
     then:
-      - wifi.disable:
       - output.turn_off: rf_switch_enable
       - output.turn_off: antenna_select # turn_on for the external U.FL antenna
-      - delay: 100ms
+      - delay: 50ms
       - wifi.enable:
 
 output:
@@ -40,5 +40,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: NONE
+  enable_on_boot: false # started from on_boot after the antenna switch is set
 
 api:
