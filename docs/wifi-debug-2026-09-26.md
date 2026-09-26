@@ -1,4 +1,22 @@
-# Wi-Fi bring-up problem — status 2026-09-26
+# Wi-Fi bring-up problem — RESOLVED 2026-09-26
+
+**Cause: a case typo in `secrets.yaml`** (`Iot` vs `IoT`). ESPHome's
+`No networks found` means *no network matching the configured SSID*, not an
+empty scan, which sent the debugging down the antenna-switch path.
+
+**Lesson for the notes:** on "No networks found", check the SSID spelling
+first; add `fast_connect: false` + DEBUG and look for the actual scan
+results before suspecting hardware.
+
+The XIAO C6 antenna-switch handling (`enable_on_boot: false`, GPIO3/GPIO14
+set from `on_boot`, then `wifi.enable`) stays in the config: it's how the
+board's ceramic/U.FL antenna gets selected and it's what Seeed's own
+Arduino variant does.
+
+---
+
+Original investigation, kept for reference:
+
 
 **Symptom:** XIAO ESP32-C6 running ESPHome scans and finds **zero** networks
 (`[W][wifi:1506]: No networks found`), then loops through
