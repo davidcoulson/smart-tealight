@@ -1,0 +1,24 @@
+# Bench bisect config: bare Wi-Fi + logger on the XIAO ESP32-C6.
+# No lights, ADC, deep sleep, power-save or antenna handling. If this
+# connects, add sections from tealight-c6.yaml back one at a time.
+#
+#   esphome run minimal-c6.yaml
+
+esphome:
+  name: tealight-min
+
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: NONE
+
+api:
