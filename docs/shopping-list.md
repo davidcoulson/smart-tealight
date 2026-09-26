@@ -12,6 +12,8 @@ are per *pack* — one pack of each covers many candles.
 | XIAO nRF54L15 | backordered at Seeed | stretch option |
 | 8× WS2812B 32 mm ring, 2-pack | [DIYmall B08PCPJSRF](https://www.amazon.com/dp/B08PCPJSRF) | prototype ring |
 | SK6812 RGB+**warm white** 5050 chips, 100 pcs | [BTF-LIGHTING B07C1XGD1X](https://www.amazon.com/dp/B07C1XGD1X) | for the v2 PCB (needs hot air / reflow) |
+| SK6812 RGBWW 144/m strip, 1 m, IP30, 5 V | BTF-LIGHTING (Amazon, warm-white variant) | tea-light strip option and the flame bulb's columns |
+| Hi-Link HLK-10M05 (5 V 2 A AC/DC) | Amazon | flame bulb power |
 | Perfboard, 32-pc assortment | [Rindion B0DBZ1BXFZ](https://www.amazon.com/dp/B0DBZ1BXFZ) | cut the 4×6 cm board to a 34 mm disc |
 
 ## To order
