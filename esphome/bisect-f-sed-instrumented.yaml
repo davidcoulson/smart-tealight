@@ -52,12 +52,16 @@ esphome:
     - priority: 1000
       then:
         - lambda: xiao_c6_rf_switch(${external_antenna});
+    - priority: -100
+      then:
+        - script.execute: go_sleepy
 
 esp32:
   board: seeed_xiao_esp32c6
   variant: esp32c6
   framework:
     type: esp-idf
+    log_level: DEBUG
 
 logger:
   level: INFO
@@ -227,45 +231,74 @@ binary_sensor:
           - light.turn_off: candle
           - deep_sleep.enter: ship_mode
 
+globals:
+  - id: sleepy_wanted
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
 interval:
-  # Attach watchdog. ESPHome applies the Thread link mode before the stack is
-  # started and the restored NetworkInfo clobbers it, so an MTD comes up
-  # sleepy and never completes the attach. Whenever we are detached, re-assert
-  # rx-on-when-idle (Minimal End Device) so the attach can finish. This also
-  # recovers the device if sleepy mode drops the link.
-  - interval: 10s
+  # Keep re-asserting rx-on-when-idle until we deliberately go sleepy;
+  # without this the device never attaches (see the header).
+  - interval: 5s
     then:
       - lambda: |-
+          {
+            auto l2 = esphome::openthread::InstanceLock::acquire();
+            if (l2) {
+              otInstance *i2 = l2.get_instance();
+              otLinkModeConfig m2 = otThreadGetLinkMode(i2);
+              ESP_LOGI("ot", "role=%d rloc=0x%04x rx_on=%d poll=%ums sleepy_wanted=%d",
+                       (int) otThreadGetDeviceRole(i2), otThreadGetRloc16(i2),
+                       (int) m2.mRxOnWhenIdle, (unsigned) otLinkGetPollPeriod(i2),
+                       (int) id(sleepy_wanted));
+            }
+          }
+          if (id(sleepy_wanted)) return;
           auto lock = esphome::openthread::InstanceLock::acquire();
           if (!lock) return;
           otInstance *inst = lock.get_instance();
-          if (otThreadGetDeviceRole(inst) != OT_DEVICE_ROLE_DETACHED) return;
           otLinkModeConfig m = otThreadGetLinkMode(inst);
-          if (m.mRxOnWhenIdle) return;
-          m.mRxOnWhenIdle = true;
-          m.mDeviceType = false;
-          m.mNetworkData = false;
-          otThreadSetLinkMode(inst, m);
-          ESP_LOGW("ot", "detached: re-asserted rx_on_when_idle=1 to re-attach");
+          if (!m.mRxOnWhenIdle) {
+            m.mRxOnWhenIdle = true;
+            m.mDeviceType = false;
+            m.mNetworkData = false;
+            otThreadSetLinkMode(inst, m);
+            ESP_LOGW("ot", "re-asserted rx_on_when_idle=1 so the attach can complete");
+          }
 
+script:
+  - id: go_sleepy
+    mode: restart
+    then:
+      # No timeout: only go sleepy once HA is actually talking to us, so a
+      # failed attach can never leave the device sleepy and unreachable.
+      - wait_until:
+          condition:
+            api.connected:
+      - delay: 20s
+      - if:
+          condition:
+            switch.is_off: radio_always_on
+          then:
+            - logger.log: "Attached and connected; switching to sleepy end device (1 s poll)"
+            - lambda: "id(sleepy_wanted) = true;"
+            - openthread.set_poll_period: 1000ms
 
 switch:
-  # OFF (default) = Minimal End Device: radio stays on, ~20-40 mA, reliable.
-  # ON  = sleepy end device (1 s poll). EXPERIMENTAL: as of 2026-09-26 the
-  # link drops against this OTBR and the watchdog above pulls it back to MED,
-  # so expect it to bounce. This is the setting the battery target needs.
+  # Turn on before an OTA push (or for debugging); off again afterwards.
   - platform: template
-    name: Sleepy mode (experimental)
-    id: sleepy_mode
-    icon: mdi:sleep
+    name: Radio always on
+    id: radio_always_on
+    icon: mdi:access-point
     optimistic: true
     restore_mode: ALWAYS_OFF
     turn_on_action:
-      - logger.log: "Switching to sleepy end device (1 s poll)"
-      - openthread.set_poll_period: 1000ms
-    turn_off_action:
-      - logger.log: "Back to Minimal End Device (radio always on)"
+      - lambda: "id(sleepy_wanted) = false;"
       - openthread.set_poll_period: 0ms
+    turn_off_action:
+      - lambda: "id(sleepy_wanted) = true;"
+      - openthread.set_poll_period: 1000ms
 
 button:
   - platform: template

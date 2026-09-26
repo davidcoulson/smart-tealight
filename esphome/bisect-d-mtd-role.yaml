@@ -1,13 +1,6 @@
-# Smart tea light — ESPHome over THREAD, SLEEPY END DEVICE (XIAO ESP32-C6)
-#
-# Attach workaround (2026-09-26): ESPHome applies the Thread link mode in
-# apply_linkmode_() *before* the dataset is activated and the stack is
-# started, and the restored NetworkInfo then clobbers it — an MTD ends up
-# advertising (rx_on=0, dev=0, nd=0), i.e. sleepy, from its very first Child
-# ID Request, and the attach never completes (Child ID Request -> no
-# response, DataReq -> NoAck, forever). Re-asserting rx_on_when_idle=1 once
-# the stack is running attaches as a child in ~1 s. So: come up as a Minimal
-# End Device, attach, then go sleepy from the go_sleepy script.
+# BISECT D — MTD with OpenThread role logging.
+# role: 0 disabled, 1 detached, 2 child, 3 router, 4 leader.
+# A steady 2 = attaching fine, SRP is the problem. A steady 1 = no parent found.
 #
 # Phase 2 of tealight-c6-thread.yaml: the radio polls its parent once a
 # second (MTD + poll_period) and the CPU light-sleeps between events via the
@@ -52,12 +45,16 @@ esphome:
     - priority: 1000
       then:
         - lambda: xiao_c6_rf_switch(${external_antenna});
+    - priority: -100
+      then:
+        - script.execute: go_sleepy
 
 esp32:
   board: seeed_xiao_esp32c6
   variant: esp32c6
   framework:
     type: esp-idf
+    log_level: DEBUG # -> OpenThread log level INFO: logs the MLE attach exchange
 
 logger:
   level: INFO
@@ -73,29 +70,14 @@ ota:
 network:
   enable_ipv6: true # Thread is IPv6-only
 
-external_components:
-  # Light-sleep power management for ESP-IDF, from the open PR. Pin to a
-  # commit once it merges (then delete this block and use the release).
-  - source: github://rwrozelle/esphome@power_management1
-    components: [power_management, esp32_pm]
-    refresh: 1d
-
-power_management:
-  - platform: esp32_pm
-    id: pm
-    enable_light_sleep: true
-    max_frequency: 160MHz
-    min_frequency: 40MHz # XTAL; the C6 idles here between polls
-    idle_time_before_sleep: 3 # FreeRTOS ticks
-    # Powers down the TOP domain (RMT, LEDC, ADC...) in light sleep. Start
-    # with false so the candle PWM keeps running; try true once idle current
-    # is confirmed, and check whether LEDC/RMT survive it.
-    power_down_peripherals: false
+# Bisect C: MTD, radio on at boot, go sleepy at runtime, NO power management.
 
 openthread:
   device_type: MTD
-  # No poll_period at boot: see the attach workaround above. The radio only
-  # stops listening once go_sleepy runs.
+  # No poll_period here on purpose: a device that is sleepy from the first
+  # packet never finished attaching to the OTBR (tested 2026-09-26). It boots
+  # with the radio on, joins like the FTD build did, and go_sleepy (below)
+  # switches it to a 1 s poll once HA is connected.
   channel: !secret thread_channel
   network_name: !secret thread_network_name
   network_key: !secret thread_network_key
@@ -228,44 +210,52 @@ binary_sensor:
           - deep_sleep.enter: ship_mode
 
 interval:
-  # Attach watchdog. ESPHome applies the Thread link mode before the stack is
-  # started and the restored NetworkInfo clobbers it, so an MTD comes up
-  # sleepy and never completes the attach. Whenever we are detached, re-assert
-  # rx-on-when-idle (Minimal End Device) so the attach can finish. This also
-  # recovers the device if sleepy mode drops the link.
   - interval: 10s
     then:
       - lambda: |-
           auto lock = esphome::openthread::InstanceLock::acquire();
-          if (!lock) return;
-          otInstance *inst = lock.get_instance();
-          if (otThreadGetDeviceRole(inst) != OT_DEVICE_ROLE_DETACHED) return;
-          otLinkModeConfig m = otThreadGetLinkMode(inst);
-          if (m.mRxOnWhenIdle) return;
-          m.mRxOnWhenIdle = true;
-          m.mDeviceType = false;
-          m.mNetworkData = false;
-          otThreadSetLinkMode(inst, m);
-          ESP_LOGW("ot", "detached: re-asserted rx_on_when_idle=1 to re-attach");
+          if (lock) {
+            otInstance *inst = lock.get_instance();
+            otDeviceRole role = otThreadGetDeviceRole(inst);
+            otLinkModeConfig m = otThreadGetLinkMode(inst);
+            ESP_LOGI("ot", "role=%d rloc16=0x%04x ch=%d panid=0x%04x "
+                           "rx_on_idle=%d device_type=%d net_data=%d poll=%ums",
+                     (int) role, otThreadGetRloc16(inst), otLinkGetChannel(inst),
+                     otLinkGetPanId(inst), (int) m.mRxOnWhenIdle,
+                     (int) m.mDeviceType, (int) m.mNetworkData,
+                     (unsigned) otLinkGetPollPeriod(inst));
+          } else {
+            ESP_LOGW("ot", "could not acquire instance lock");
+          }
 
+script:
+  - id: go_sleepy
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            api.connected:
+          timeout: 120s
+      - delay: 15s
+      - if:
+          condition:
+            switch.is_off: radio_always_on
+          then:
+            - logger.log: "Attached and connected; switching to sleepy end device (1 s poll)"
+            - openthread.set_poll_period: 1000ms
 
 switch:
-  # OFF (default) = Minimal End Device: radio stays on, ~20-40 mA, reliable.
-  # ON  = sleepy end device (1 s poll). EXPERIMENTAL: as of 2026-09-26 the
-  # link drops against this OTBR and the watchdog above pulls it back to MED,
-  # so expect it to bounce. This is the setting the battery target needs.
+  # Turn on before an OTA push (or for debugging); off again afterwards.
   - platform: template
-    name: Sleepy mode (experimental)
-    id: sleepy_mode
-    icon: mdi:sleep
+    name: Radio always on
+    id: radio_always_on
+    icon: mdi:access-point
     optimistic: true
     restore_mode: ALWAYS_OFF
     turn_on_action:
-      - logger.log: "Switching to sleepy end device (1 s poll)"
-      - openthread.set_poll_period: 1000ms
-    turn_off_action:
-      - logger.log: "Back to Minimal End Device (radio always on)"
       - openthread.set_poll_period: 0ms
+    turn_off_action:
+      - openthread.set_poll_period: 1000ms
 
 button:
   - platform: template

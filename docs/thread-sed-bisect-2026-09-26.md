@@ -1,62 +1,101 @@
-# Sleepy-end-device bisect — 2026-09-26
+# Thread sleepy-end-device investigation — 2026-09-26
 
-Phase 1 (FTD over Thread) works; the sleepy build does not. Bisected on the
-bench board (XIAO ESP32-C6, MAC …13:79:FC), ESPHome 2026.9.0, ESP-IDF 5.5.5,
-flashed over USB. "Attach" = `[openthread] SRP client has started`.
+Bench board: XIAO ESP32-C6 (MAC …13:79:FC), ESPHome 2026.9.0, ESP-IDF 5.5.5,
+flashed over USB. Border router: HA OpenThread Border Router on an SLZB
+dongle, ~10 ft away, network `HomeThread` channel 15.
+
+## Summary
+
+| | |
+|---|---|
+| Thread + HA (FTD) | works |
+| Thread + HA as an **MTD** | works, **with a workaround** (below) |
+| `esp32_pm` light sleep | works, innocent |
+| **Sleepy (radio-off) polling** | **does not hold the link** — battery target still unmet |
 
 ## Finding 1: the external U.FL antenna path is dead
 
-The pigtail is physically attached, but the *same* known-good FTD firmware
-attaches on the onboard ceramic antenna and **never** attaches with
-`external_antenna: true`. Suspect an unseated U.FL connector or a bad
-pigtail/antenna. The finished candle uses the onboard antenna anyway.
+The pigtail is attached, but identical firmware attaches on the onboard
+ceramic antenna and never attaches with `external_antenna: true`. Suspect an
+unseated U.FL connector or a bad pigtail/antenna. Re-seat it before trusting
+any `true` result — an earlier round of this bisect ran on that dead path and
+produced wrong conclusions (it is why `esp32_pm` was briefly blamed).
+The finished candle uses the onboard antenna anyway.
 
-An earlier round of this bisect was run on that dead path and its results were
-wrong; everything below is on the **onboard antenna**.
+## Finding 2: ESPHome applies the Thread link mode too early
 
-## Finding 2: `device_type: MTD` is the only blocker
+`OpenThreadComponent::apply_linkmode_()` is called from `openthread_esp.cpp`
+*before* the dataset is activated and the stack is started. The stored
+`NetworkInfo` is then restored over it (`Read NetworkInfo {... role:router,
+mode:` in the boot log), so an MTD ends up advertising
+`(rx_on=0, device_type=0, network_data=0)` — i.e. **sleepy** — even when no
+`poll_period` is configured and ESPHome's own code intends
+`mRxOnWhenIdle = (poll_period == 0) = true`.
 
-| device_type | poll_period | esp32_pm | Attach? |
-|---|---|---|---|
-| FTD | — | no | **yes** (~40 s; 15:02, 16:10, 16:18) |
-| FTD | — | **yes** | **yes** (17:05) |
-| MTD | at runtime | no | no (170 s) |
-| MTD | 1000 ms | no | no (150 s) |
-| MTD | at runtime | **yes** | no (170 s) |
+Consequence: the device is sleepy from its very first Child ID Request and
+the attach never completes:
 
-So the [esp32_pm PR](https://github.com/esphome/esphome/pull/12325) is fine —
-light sleep is available to us. **`device_type: MTD` never attaches**, with or
-without polling or power management, with the OTBR (SLZB dongle) ~10 ft away.
-
-This matters because MTD is not optional: an FTD keeps its radio in RX
-permanently (tens of mA), so light sleep alone saves little. The radio has to
-sleep, and only an MTD/SED can do that.
-
-## Next step
-
-`SRP client has started` is our only attach indicator, so we cannot yet tell
-"never attached" from "attached as a child, but SRP failed". Log the
-OpenThread role directly to separate them:
-
-```yaml
-interval:
-  - interval: 10s
-    then:
-      - lambda: ESP_LOGI("ot", "role=%d", otThreadGetDeviceRole(esp_openthread_get_instance()));
+```
+Mle: Send Parent Request to routers      -> Receive Parent Response (OTBR, 0xdc00)
+Mle: Send Child ID Request  x3           -> no response
+Mac: Frame tx ... error:NoAck, type:Cmd(DataReq), dst:a684372864d85749
+Mle: Attach attempt N unsuccessful, will try again in ...
 ```
 
-Roles: 0 disabled, 1 detached, 2 child, 3 router, 4 leader. A steady `2` means
-the MTD *is* attaching and the problem is SRP/mDNS; a steady `1` means it
-genuinely cannot find a parent, which is an ESPHome/OpenThread issue worth
-reporting upstream with these logs.
+It hears the border router fine (Parent Response arrives), so this is not RF
+range. Re-asserting the link mode *after* the stack is running attaches as a
+child in about one second:
 
-Meanwhile the bench board stays on `tealight-c6-thread.yaml` (FTD) so it is
-usable in HA at ~20–40 mA. **The week-long battery target remains unproven.**
+```
+[W][ot] forced rx_on_when_idle=1 -> OK
+Mle: Receive Child ID Response (OTBR) -> Role detached -> child
+[I][openthread] SRP client has started
+```
+
+**Workaround, now in `tealight-c6-thread-sed.yaml`:** a 10 s interval that,
+whenever the role is `DETACHED`, re-asserts `mRxOnWhenIdle = true`. The
+device runs as a Minimal End Device (MTD, radio on) and the same watchdog
+recovers it if the link ever drops. Worth reporting upstream.
+
+## Finding 3: sleepy polling does not hold the link
+
+With the attach fixed, switching to a 1 s poll (`openthread.set_poll_period`,
+which re-applies link mode with `rx_on=false`) drops the device: it detaches
+and the polls go unanswered with the same `Cmd(DataReq) ... error:NoAck`.
+Since a sleepy child retrieves everything from its parent by polling, and the
+parent never ACKs the poll, the link cannot survive.
+
+The MAC-layer ACK window is ~192 µs after transmit, so a plausible cause is
+the C6 missing ACKs on radio wake rather than anything in ESPHome — ordinary
+frames are received fine, only the tight post-TX ACK is missed. Not proven.
+
+Sleepy mode is exposed as an **experimental switch** (`Sleepy mode
+(experimental)`, default off) so it can be retried without reflashing; the
+watchdog pulls the device back to MED when it drops.
+
+## Where this leaves battery life
+
+An MED keeps its radio in RX permanently — tens of mA — so `esp32_pm` light
+sleep saves little on its own. **The week-long target is unmet and blocked on
+Finding 3.**
+
+Next things to try:
+1. A different Thread router (an Apple/Google border router, or a second C6 as
+   an FTD parent) to establish whether the failure is the SLZB RCP or the C6.
+2. A longer poll period (5–10 s) — fewer polls, but the same ACK problem.
+3. `CONFIG_IEEE802154_*` timing/sleep options on the C6.
+4. Failing all that: the nRF54L15 (backordered), whose Thread stack is mature,
+   or accept mains/USB power for the tea light and keep battery for later.
+
+## Current state of the bench board
+
+`tealight-c6-thread-sed.yaml` — MTD + attach watchdog + `esp32_pm` light
+sleep, online in HA over Thread, lights verified from HA. Sleepy switch off.
 
 ## On writing our own power-management component
 
-Not needed. ESPHome's `esp32:` block accepts raw `sdkconfig_options` (user
-values take precedence), and the runtime half is one `esp_pm_configure()` call
-from an `on_boot` lambda — about fifteen lines, no external component, and
-each knob can be toggled independently. Worth doing only if we later want to
-drop the PR dependency.
+Not needed. `esp32:` accepts raw `sdkconfig_options` (user values take
+precedence) and the runtime half is one `esp_pm_configure()` call from an
+`on_boot` lambda — ~15 lines, no external component. `esp32_pm` from
+[PR #12325](https://github.com/esphome/esphome/pull/12325) already works, so
+this is only worth doing to drop the PR dependency.
