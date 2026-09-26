@@ -22,7 +22,7 @@ are per *pack* — one pack of each covers many candles.
 | 2N7000 N-FET, TO-92 | [BOJACK 100 pcs B0831RFJ1B](https://www.amazon.com/dp/B0831RFJ1B) (or [20 pcs B0BJQ92VNT](https://www.amazon.com/dp/B0BJQ92VNT)) | Q2, Q3 |
 | AO3401A P-FET, SOT-23 | [Todiys 100 pcs B08RHFLH1K](https://www.amazon.com/dp/B08RHFLH1K) | Q1 |
 | SOT-23 → SIP-3 adapter | [Chironal 50 pcs B07MQBF2DD](https://www.amazon.com/dp/B07MQBF2DD) | 3-in-a-row pinout, exactly what the perfboard layout assumes (pads B9/C9/D9) |
-| 0805 resistor kit | [660 pcs / 33 values B0CH2WZWP6](https://www.amazon.com/dp/B0CH2WZWP6) | has 82, 100, 330, 1k, 100k, 200k. Use **200k + 200k** for the divider (same ratio as 220k/220k) |
+| 0805 resistor kit | [Chanzon 1200 pcs / 60 values B08RYMY6XK](https://www.amazon.com/dp/B08RYMY6XK) | covers 82, 100, 330, 1k, 100k, 220k (200k also fine for the divider — just use two of the same) |
 | 100 µF 6.3 V tantalum, B (3528) | [AVX strip of 5 B003F1PCH2](https://www.amazon.com/dp/B003F1PCH2) | C1; 3.5 mm body bridges two adjacent pads. Mind polarity (stripe = +) |
 | 3 mm warm-white LED, flat-top wide angle | [Dollhouse diffused 20 pcs B017TRGG3Q](https://www.amazon.com/dp/B017TRGG3Q) | ~3000 K, 105–115° beam — better candle glow than a 30° clear LED |
 | 6×6×5 mm tact switch | [Taiss 100 pcs B0796QHL5Z](https://www.amazon.com/dp/B0796QHL5Z) | SW1, off-board at the base |
