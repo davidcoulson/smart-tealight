@@ -34,7 +34,7 @@ api:
 
 ota:
   - platform: esphome
-    password: !secret tealight_ota_password
+    encryption: # reuses the api encryption key; no separate password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -64,8 +64,8 @@ light:
     name: Ring
     pin: GPIO22 # D4
     num_leds: ${ring_leds}
-    chipset: WS2812 # SK6812 RGBW(W): chipset SK6812 + is_rgbw: true
-    rgb_order: GRB
+    chipset: WS2812 # SK6812 RGBW(W): chipset SK6812 + channel_colors: GRBW
+    channel_colors: GRB
     power_supply: ring_rail
     color_correct: [$ring_cap, $ring_cap, $ring_cap]
     restore_mode: ALWAYS_OFF
