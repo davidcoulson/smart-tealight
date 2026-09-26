@@ -40,9 +40,12 @@ esphome:
   includes:
     - xiao_c6_rf_switch.h
   on_boot:
-    priority: 1000
-    then:
-      - lambda: xiao_c6_rf_switch(${external_antenna});
+    - priority: 1000
+      then:
+        - lambda: xiao_c6_rf_switch(${external_antenna});
+    - priority: -100
+      then:
+        - script.execute: go_sleepy
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -85,7 +88,10 @@ power_management:
 
 openthread:
   device_type: MTD
-  poll_period: 1000ms # sleepy end device; HA commands land on the next poll
+  # No poll_period here on purpose: a device that is sleepy from the first
+  # packet never finished attaching to the OTBR (tested 2026-09-26). It boots
+  # with the radio on, joins like the FTD build did, and go_sleepy (below)
+  # switches it to a 1 s poll once HA is connected.
   channel: !secret thread_channel
   network_name: !secret thread_network_name
   network_key: !secret thread_network_key
@@ -216,6 +222,22 @@ binary_sensor:
           - light.turn_off: ring
           - light.turn_off: candle
           - deep_sleep.enter: ship_mode
+
+script:
+  - id: go_sleepy
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            api.connected:
+          timeout: 120s
+      - delay: 15s
+      - if:
+          condition:
+            switch.is_off: radio_always_on
+          then:
+            - logger.log: "Attached and connected; switching to sleepy end device (1 s poll)"
+            - openthread.set_poll_period: 1000ms
 
 switch:
   # Turn on before an OTA push (or for debugging); off again afterwards.
