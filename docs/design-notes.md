@@ -157,6 +157,7 @@ Schematic: [`wiring.svg`](wiring.svg) (regenerate with `python3 wiring.py`).
 | D1 | GPIO1 | Push button to GND | An LP GPIO, so it can wake the C6 from deep sleep. Also: local toggle, and long-press for ship mode |
 | D2 | GPIO2 | Warm-white LED PWM | Gate of a low-side N-FET (AO3400). LED + resistor from BAT+ |
 | D3 | GPIO21 | Addressable LED rail enable | Drives the high-side switch below |
+| — | GPIO3, GPIO14 | **Reserved: XIAO C6 RF switch** (not on the header) | GPIO3 low enables the antenna switch, GPIO14 low selects the onboard ceramic antenna. Firmware must drive both low before Wi-Fi/Thread starts or the radio sees nothing. Applies to ESP-Matter too |
 | D4 | GPIO22 | Addressable LED data | 330 Ω series resistor. Drive it **low** whenever the rail is off, or the LEDs get phantom-powered through the data pin |
 
 ### LED rail switch

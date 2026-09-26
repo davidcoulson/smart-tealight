@@ -18,6 +18,15 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   name_add_mac_suffix: true
+  # The XIAO ESP32-C6 has an RF switch between the chip and its antennas.
+  # Until GPIO3 is driven low the radio is connected to nothing ("No
+  # networks found"). GPIO14 low = onboard ceramic antenna, high = U.FL.
+  # Priority 600 runs after GPIO setup (800) and before Wi-Fi (250).
+  on_boot:
+    priority: 600
+    then:
+      - output.turn_off: rf_switch_enable
+      - output.turn_off: antenna_select
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -52,6 +61,14 @@ power_supply:
     keep_on_time: 2s
 
 output:
+  # XIAO C6 antenna control (not on the header; see on_boot above).
+  - platform: gpio
+    id: rf_switch_enable
+    pin: GPIO3
+  - platform: gpio
+    id: antenna_select
+    pin: GPIO14
+
   # Warm-white candle LED, low-side N-FET (AO3400).
   - platform: ledc
     id: warm_led
