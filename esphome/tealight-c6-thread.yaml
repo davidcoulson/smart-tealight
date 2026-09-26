@@ -19,6 +19,9 @@ substitutions:
   ring_cap: 40%
   # "true" = U.FL external antenna (bench board), "false" = onboard ceramic
   external_antenna: "false"
+  # With name_add_mac_suffix the dashboard would look for ${name}.local, which
+  # doesn't exist. Give it the real hostname (or the fd99:… IPv6 address).
+  use_address: tealight-thread-1379fc.local
 
 esphome:
   name: ${name}
@@ -63,6 +66,7 @@ openthread:
   pskc: !secret thread_pskc
   mesh_local_prefix: !secret thread_mesh_local_prefix
   force_dataset: true
+  use_address: ${use_address}
 
 # High-side switch for the addressable LEDs' supply (AO3401A + 2N7002).
 # ESPHome turns it on before the ring lights and off keep_on_time after it
