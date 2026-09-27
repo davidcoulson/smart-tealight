@@ -1,0 +1,6 @@
+/* Spinel (RCP) traffic on the board's own USB CDC ACM node. */
+/ {
+	chosen {
+		zephyr,ot-uart = &board_cdc_acm_uart;
+	};
+};

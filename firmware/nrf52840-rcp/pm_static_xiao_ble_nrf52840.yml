@@ -1,0 +1,13 @@
+# Adafruit UF2 bootloader layout on the XIAO nRF52840 (app starts at 0x27000).
+softdevice_reserved:
+  address: 0
+  size: 159744
+app:
+  address: 159744
+  size: 806912
+settings_storage:
+  address: 966656
+  size: 32768
+uf2_partition:
+  address: 999424
+  size: 49152
