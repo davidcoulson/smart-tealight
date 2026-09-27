@@ -1,3 +1,4 @@
+# EXP 3: sleepy with CONFIG_LWIP_ND6=n (single variable vs the SED config).
 # Smart tea light — ESPHome over THREAD, SLEEPY END DEVICE (XIAO ESP32-C6)
 #
 # Attach workaround (2026-09-26): ESPHome applies the Thread link mode in
@@ -52,13 +53,6 @@ esphome:
     - priority: 1000
       then:
         - lambda: xiao_c6_rf_switch(${external_antenna});
-    # Auto-sleepy is DISABLED: the attach survives now (ND6 fix) but the
-    # parent still cannot deliver data to a sleepy child, so HA's pings stop
-    # arriving and the API drops ~70 s in. Flip the Sleepy mode switch in HA
-    # to test manually.
-    # - priority: -100
-    #   then:
-    #     - script.execute: go_sleepy
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -66,12 +60,12 @@ esp32:
   framework:
     type: esp-idf
     sdkconfig_options:
-      # REQUIRED for sleepy operation. Espressif's ot_sleepy_device reference
-      # sets this, and esp32_pm only disables ND6 when poll_period is set at
-      # COMPILE time — we set it at runtime, so that guard never fires.
-      # With ND6 on, IPv6 Neighbour Discovery keeps probing; once the radio
-      # stops listening the probes fail, the neighbour goes unreachable and
-      # the interface drops ("Network down; disconnect") within seconds.
+      # Espressif's own ot_sleepy_device reference sets this. esp32_pm only
+      # disables ND6 when poll_period is set at COMPILE time; we set it at
+      # runtime, so the guard never fires and ND6 stays on. IPv6 Neighbour
+      # Discovery then keeps probing, the probes fail once the radio stops
+      # listening, the neighbour goes unreachable and the interface drops
+      # ("Network down; disconnect").
       CONFIG_LWIP_ND6: "n"
 
 logger:
@@ -264,25 +258,13 @@ interval:
           ESP_LOGW("ot", "detached: re-asserted rx_on_when_idle=1 to re-attach");
 
 
-script:
-  # Attach first (as a Minimal End Device), let HA connect, then drop to
-  # sleepy. Never go sleepy before the attach completes — that is the state
-  # the device cannot recover from on its own.
-  - id: go_sleepy
-    mode: restart
-    then:
-      - wait_until:
-          condition:
-            api.connected:
-      - delay: 60s # let HA's initial API + OTA version probes finish first
-      - switch.turn_on: sleepy_mode
-
 switch:
-  # OFF at boot = Minimal End Device (radio on) so the attach can complete;
-  # go_sleepy turns it ON ~20 s after HA connects. Turn it OFF from HA before
-  # an OTA push, since esphome.ota cannot reach a polling device.
+  # OFF (default) = Minimal End Device: radio stays on, ~20-40 mA, reliable.
+  # ON  = sleepy end device (1 s poll). EXPERIMENTAL: as of 2026-09-26 the
+  # link drops against this OTBR and the watchdog above pulls it back to MED,
+  # so expect it to bounce. This is the setting the battery target needs.
   - platform: template
-    name: Sleepy mode
+    name: Sleepy mode (experimental)
     id: sleepy_mode
     icon: mdi:sleep
     optimistic: true

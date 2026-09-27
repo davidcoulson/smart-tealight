@@ -28,7 +28,7 @@
 # thread_pan_id / thread_ext_pan_id / thread_pskc / thread_mesh_local_prefix.
 
 substitutions:
-  name: tealight-exp1
+  name: tealight-sed
   friendly_name: Tealight SED
   ring_leds: "8"
   # Brightness cap for the ring (battery + charger protection). 40 % of 8
@@ -38,7 +38,7 @@ substitutions:
   external_antenna: "false"
   # With name_add_mac_suffix the dashboard would look for ${name}.local, which
   # doesn't exist. Give it the real hostname (or the fd99:… IPv6 address).
-  use_address: tealight-exp1-1379fc.local
+  use_address: tealight-sed-1379fc.local
 
 esphome:
   name: ${name}

@@ -11,7 +11,8 @@ dongle, ~10 ft away, network `HomeThread` channel 15.
 | Thread + HA (FTD) | works |
 | Thread + HA as an **MTD** | works, **with a workaround** (below) |
 | `esp32_pm` light sleep | works, innocent |
-| **Sleepy (radio-off) polling** | **does not hold the link** — battery target still unmet |
+| Sleepy **attach** | fixed 2026-09-27 via `CONFIG_LWIP_ND6=n` |
+| Sleepy **data delivery** | **still broken** — API dies ~70 s in; battery target unmet |
 
 ## Finding 1: the external U.FL antenna path is dead
 
@@ -93,6 +94,55 @@ frames are received fine, only the tight post-TX ACK is missed. Not proven.
 Sleepy mode is exposed as an **experimental switch** (`Sleepy mode
 (experimental)`, default off) so it can be retried without reflashing; the
 watchdog pulls the device back to MED when it drops.
+
+## Finding 4 (2026-09-27): ND6 was breaking the sleepy attach
+
+Espressif's own `ot_sleepy_device` reference sets **`CONFIG_LWIP_ND6=n`**.
+Our builds had it **on**: `esp32_pm` only disables ND6 when `poll_period` is
+set at *compile* time, and we set it at runtime, so that guard never fired.
+With ND6 on, IPv6 Neighbour Discovery keeps probing; once the radio stops
+listening the probes fail, the neighbour goes unreachable and the interface
+drops — the `Network down; disconnect` we had been chasing.
+
+Adding it explicitly fixes the detach:
+
+```yaml
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_LWIP_ND6: "n"
+```
+
+Verified: went sleepy and stayed attached for minutes with no detach and no
+watchdog activity, and lights were still controllable from HA immediately
+after the transition. Ruled out along the way, all measured not assumed:
+
+* `esp32_pm` / radio sleep — sleepy fails identically with `CONFIG_PM_ENABLE`
+  unset entirely.
+* RF/range — parent link is **avg RSSI -53..-56 dBm, LQI 3/3 both
+  directions** (3 is the maximum).
+* `CONFIG_FREERTOS_HZ` — already 1000, matching the reference.
+* Child timeout / supervision ([PR #16387](https://github.com/esphome/esphome/pull/16387))
+  — that concerns poll periods over 180 s; ours is 1 s.
+
+## Finding 5: data delivery to a sleepy child still fails
+
+With the attach fixed, the device **stays attached** but HA's API connection
+dies ~70 s after it goes sleepy, and the device logs *nothing* — it never
+sees a disconnect. HA's pings simply stop arriving. So the parent is not
+delivering queued (indirect) traffic to the sleepy child, even though the
+MLE link is healthy.
+
+This is the same delivery failure as before, one layer up: previously it
+killed the attach, now it kills the data path.
+
+Auto-sleepy is therefore **disabled** in `tealight-c6-thread-sed.yaml`; the
+`Sleepy mode` switch remains for manual testing, and the detach watchdog
+still recovers the device.
+
+Also worth knowing: an OTA/version probe that lands while the device is
+sleepy hangs the OTA component for ~170 s and blocks the main loop. Turn
+Sleepy mode off before any OTA.
 
 ## Where this leaves battery life
 

@@ -52,27 +52,12 @@ esphome:
     - priority: 1000
       then:
         - lambda: xiao_c6_rf_switch(${external_antenna});
-    # Auto-sleepy is DISABLED: the attach survives now (ND6 fix) but the
-    # parent still cannot deliver data to a sleepy child, so HA's pings stop
-    # arriving and the API drops ~70 s in. Flip the Sleepy mode switch in HA
-    # to test manually.
-    # - priority: -100
-    #   then:
-    #     - script.execute: go_sleepy
 
 esp32:
   board: seeed_xiao_esp32c6
   variant: esp32c6
   framework:
     type: esp-idf
-    sdkconfig_options:
-      # REQUIRED for sleepy operation. Espressif's ot_sleepy_device reference
-      # sets this, and esp32_pm only disables ND6 when poll_period is set at
-      # COMPILE time — we set it at runtime, so that guard never fires.
-      # With ND6 on, IPv6 Neighbour Discovery keeps probing; once the radio
-      # stops listening the probes fail, the neighbour goes unreachable and
-      # the interface drops ("Network down; disconnect") within seconds.
-      CONFIG_LWIP_ND6: "n"
 
 logger:
   level: INFO
@@ -88,24 +73,10 @@ ota:
 network:
   enable_ipv6: true # Thread is IPv6-only
 
-external_components:
-  # Light-sleep power management for ESP-IDF, from the open PR. Pin to a
-  # commit once it merges (then delete this block and use the release).
-  - source: github://rwrozelle/esphome@power_management1
-    components: [power_management, esp32_pm]
-    refresh: 1d
-
-power_management:
-  - platform: esp32_pm
-    id: pm
-    enable_light_sleep: true
-    max_frequency: 160MHz
-    min_frequency: 40MHz # XTAL; the C6 idles here between polls
-    idle_time_before_sleep: 3 # FreeRTOS ticks
-    # Powers down the TOP domain (RMT, LEDC, ADC...) in light sleep. Start
-    # with false so the candle PWM keeps running; try true once idle current
-    # is confirmed, and check whether LEDC/RMT survive it.
-    power_down_peripherals: false
+# EXP 2: like EXP 1 (no esp32_pm) plus parent link-quality logging.
+# EXP 1 was: identical to tealight-c6-thread-sed.yaml but WITHOUT esp32_pm, so
+# CONFIG_IEEE802154_SLEEP_ENABLE / PM_ENABLE / tickless idle are all off.
+# Question: does the sleepy link hold when the radio peripheral never sleeps?
 
 openthread:
   device_type: MTD
@@ -254,6 +225,18 @@ interval:
           auto lock = esphome::openthread::InstanceLock::acquire();
           if (!lock) return;
           otInstance *inst = lock.get_instance();
+          otRouterInfo p;
+          int8_t avg_rssi = 0, last_rssi = 0;
+          if (otThreadGetParentInfo(inst, &p) == OT_ERROR_NONE) {
+            otThreadGetParentAverageRssi(inst, &avg_rssi);
+            otThreadGetParentLastRssi(inst, &last_rssi);
+            ESP_LOGI("ot", "parent rloc=0x%04x avg_rssi=%d last_rssi=%d dBm lqi_in=%d lqi_out=%d age=%us role=%d",
+                     p.mRloc16, (int) avg_rssi, (int) last_rssi, (int) p.mLinkQualityIn,
+                     (int) p.mLinkQualityOut, (unsigned) p.mAge,
+                     (int) otThreadGetDeviceRole(inst));
+          } else {
+            ESP_LOGI("ot", "no parent (role=%d)", (int) otThreadGetDeviceRole(inst));
+          }
           if (otThreadGetDeviceRole(inst) != OT_DEVICE_ROLE_DETACHED) return;
           otLinkModeConfig m = otThreadGetLinkMode(inst);
           if (m.mRxOnWhenIdle) return;
@@ -264,25 +247,13 @@ interval:
           ESP_LOGW("ot", "detached: re-asserted rx_on_when_idle=1 to re-attach");
 
 
-script:
-  # Attach first (as a Minimal End Device), let HA connect, then drop to
-  # sleepy. Never go sleepy before the attach completes — that is the state
-  # the device cannot recover from on its own.
-  - id: go_sleepy
-    mode: restart
-    then:
-      - wait_until:
-          condition:
-            api.connected:
-      - delay: 60s # let HA's initial API + OTA version probes finish first
-      - switch.turn_on: sleepy_mode
-
 switch:
-  # OFF at boot = Minimal End Device (radio on) so the attach can complete;
-  # go_sleepy turns it ON ~20 s after HA connects. Turn it OFF from HA before
-  # an OTA push, since esphome.ota cannot reach a polling device.
+  # OFF (default) = Minimal End Device: radio stays on, ~20-40 mA, reliable.
+  # ON  = sleepy end device (1 s poll). EXPERIMENTAL: as of 2026-09-26 the
+  # link drops against this OTBR and the watchdog above pulls it back to MED,
+  # so expect it to bounce. This is the setting the battery target needs.
   - platform: template
-    name: Sleepy mode
+    name: Sleepy mode (experimental)
     id: sleepy_mode
     icon: mdi:sleep
     optimistic: true
