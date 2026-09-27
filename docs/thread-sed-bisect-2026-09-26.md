@@ -57,7 +57,28 @@ whenever the role is `DETACHED`, re-asserts `mRxOnWhenIdle = true`. The
 device runs as a Minimal End Device (MTD, radio on) and the same watchdog
 recovers it if the link ever drops. Worth reporting upstream.
 
-## Finding 3: sleepy polling does not hold the link
+## Finding 3: sleepy polling does not hold the link — confirmed on two routers
+
+**Update 2026-09-27.** Retested against a brand-new Thread network
+(`SLZB-d6b5`, channel 15, PAN 0xd6b5) on a different border router
+(extended address a21ff13d0ba4994b at 10.2.4.5), with the old OTBR gone. The
+device attaches and runs fine as a MED, and HA drives it normally. Flipping
+the sleepy switch, with the serial monitor attached throughout:
+
+```
+02:42:49.520  [W][api.connection] Home Assistant ...: Network down; disconnect
+02:42:50.906  [W][ot] detached: re-asserted rx_on_when_idle=1 to re-attach
+02:42:58.762  [W][component] api cleared Warning flag        (back as MED)
+```
+
+It detaches ~1.4 s after the radio stops listening. Identical behaviour to
+the original OTBR, on a fresh network with an empty child table, a different
+router and different credentials — so **the fault is on the ESP32-C6 /
+ESPHome side, not the SLZB RCP and not accumulated network state.**
+Interference is also ruled out: 20 MHz Wi-Fi, Thread on channel 15 (the gap
+between Wi-Fi 1 and 6), Zigbee 50 MHz away on 25.
+
+### Original single-router finding
 
 With the attach fixed, switching to a 1 s poll (`openthread.set_poll_period`,
 which re-applies link mode with `rx_on=false`) drops the device: it detaches
