@@ -34,3 +34,5 @@ Wi-Fi is fine — or Thread for consistency), different body:
 Open questions: heat (LED + PSU in a closed bulb), whether to skip the
 AC/DC altogether and make a 24 V DC version for fixtures we control, and
 whether it's worth it vs. the $15 Linkind + Matter.
+
+Parts list: [`../flame-bulb-bom.md`](../flame-bulb-bom.md). Exploded assembly: `../flame-bulb-exploded.png`.
