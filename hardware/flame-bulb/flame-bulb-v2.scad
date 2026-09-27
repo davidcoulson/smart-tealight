@@ -18,7 +18,7 @@ n_facets = 10; strip_w = 12; facet_w = strip_w + 0.2;
 core_r_min = facet_w / (2 * sin(180 / n_facets));      // radius needed for the strips
 core_r     = max(core_r_min, bore/2 + 1.8);            // or bore + 1.8 mm wall
 core_f2f   = 2 * core_r * cos(180 / n_facets);
-n_px   = 12;                          // pixels per column at 6.94 mm -> 120 px total
+n_px   = 15;                          // pixels per column at 6.94 mm -> 150 px total (T19 height)
 mast_h = n_px * 6.94 + 2;             // 85.3
 cap_lip = 5; spigot_h = 6;
 e26_body_d = 26.5; e26_cup_h = 12; e26_wall = 2.5;
