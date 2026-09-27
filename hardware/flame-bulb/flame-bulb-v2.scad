@@ -20,15 +20,19 @@ core_r     = max(core_r_min, bore/2 + 1.8);            // or bore + 1.8 mm wall
 core_f2f   = 2 * core_r * cos(180 / n_facets);
 n_px   = 15;                          // pixels per column at 6.94 mm -> 150 px total (T19 height)
 mast_h = n_px * 6.94 + 2;             // 85.3
-cap_lip = 5; spigot_h = 6;
+cap_lip = 8; spigot_h = 6;            // 8 mm of shade engagement on the lip
+// Shade runs right down over the cap lip, ending flush at the E26 plug (the
+// lip is sized to the shade bore; glue or friction retains it).
+shade_over_lip = true;
+lip_d = shade_over_lip ? od - 2*diff_wall - 2*clr : od;
 e26_body_d = 26.5; e26_cup_h = 12; e26_wall = 2.5;
-shade_h = mast_h + 6; shade_cap = 1.6;
+shade_h = mast_h + 6 + (shade_over_lip ? cap_lip : 0); shade_cap = 1.6;
 $fn = 160;
 
 module cap() {
   difference() {
     union() {
-      cylinder(d = od, h = cap_lip);                                     // visible lip
+      cylinder(d = lip_d, h = cap_lip);                                  // lip (inside the shade)
       translate([0, 0, cap_lip]) cylinder(d = bore - 2*clr, h = spigot_h); // into the mast bore
       translate([0, 0, -e26_cup_h]) cylinder(d = e26_body_d + 2*e26_wall, h = e26_cup_h + 0.01);
     }
@@ -64,5 +68,5 @@ else {
   color("dimgray") translate([0, 0, cap_lip + g]) mast();
   color("steelblue", 0.7) translate([-psu_w/2, -psu_t/2, cap_lip + spigot_h + 1 + g]) cube([psu_w, psu_t, psu_l]);   // PSU
   color("royalblue", 0.8) translate([-10.5, -2, cap_lip + spigot_h + psu_l + 4 + g]) cube([21, 4, 17.8]);          // XIAO on edge
-  color("lightyellow", 0.30) translate([0, 0, cap_lip + 2*g]) shade();
+  color("lightyellow", 0.30) translate([0, 0, (shade_over_lip ? 0 : cap_lip) + 2*g]) shade();
 }
