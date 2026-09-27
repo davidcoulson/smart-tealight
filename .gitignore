@@ -1,3 +1,6 @@
 secrets.yaml
 .esphome/
 __pycache__/
+
+# any build dir variant (build/, build-noicd/, ...)
+build*/
