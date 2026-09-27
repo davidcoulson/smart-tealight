@@ -34,8 +34,13 @@ psu_l = 47; psu_w = 28; psu_t = 22;   // HLK-10M05
 //   "side"    28 tall (on 47x22), 52 mm diag base ~41 mm   <- default, fits Ø57
 //   "flat"    22 tall (on 47x28), 55 mm diag base ~33 mm, needs base_od 59
 psu_orientation = "side";
+// Linkind-style look: the shade runs the full height and slides down OVER the
+// base, so the whole 57 mm body is translucent and the PSU section glows from
+// spill light instead of being an opaque collar. The base becomes an inner
+// part sized to the shade bore; the cap's flange is the visible bottom lip.
+shade_covers_base = true;
 psu_h   = psu_orientation == "upright" ? psu_l : psu_orientation == "side" ? psu_w : psu_t;
-base_od = psu_orientation == "flat" ? 59 : od;
+base_od = shade_covers_base ? od - 2*diff_wall - 2*clr : (psu_orientation == "flat" ? 59 : od);
 cap_h     = 5;
 top_plate = 8;                         // top face: 6 mm blind socket for the core + 2 mm floor
 base_h    = psu_h + 1 + (cap_h - wall) + top_plate;   // module + clearance + cap plug + plate
@@ -64,7 +69,7 @@ foot_h    = 6;
 
 diff_h    = 74;
 top_h     = 5;
-shade_h   = 78;   // one-piece shade: tube + closed top
+shade_h   = shade_covers_base ? 78 + base_h - cap_h : 78;   // tube + closed top
 shade_cap = 1.6;  // thickness of the closed end
 plug_h    = 4;
 
@@ -77,7 +82,8 @@ $fn = 160;
 // Open at the BOTTOM so the PSU drops in; the cap closes it afterwards.
 module base() {
   difference() {
-    union() {
+    if (shade_covers_base) cylinder(d = base_od, h = base_h);
+    else union() {
       cylinder(d = base_od, h = base_h - plug_h);
       translate([0, 0, base_h - plug_h]) cylinder(d = spigot_d, h = plug_h);
     }
@@ -96,7 +102,7 @@ module base() {
 // ----------------------------------------------------------------- cap --
 module cap() {
   union() {
-    cylinder(d = base_od, h = wall);                  // flange, sits flush
+    cylinder(d = od, h = wall);                       // flange = visible bottom lip
     translate([0, 0, wall])
       cylinder(d = chamber_d - clr, h = cap_h - wall); // press-in plug
     if (e26_style == "plug")
@@ -171,5 +177,5 @@ else {
   color("dimgray")  translate([0, 0, -g]) cap();
   color("orange")   translate([0, 0, base_h - foot_h + g]) core();
   color("lightyellow", 0.30)
-                    translate([0, 0, base_h - plug_h + 2*g]) shade();
+                    translate([0, 0, (shade_covers_base ? cap_h : base_h - plug_h) + 2*g]) shade();
 }
