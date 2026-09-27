@@ -266,3 +266,24 @@ child-vs-environment.
 
 Decision (user): MR4U back to running its own OTBR; HA OTBR add-on stopped and
 set to manual boot.
+
+## 2026-09-27 — Finding 10: sleepy works on the MR4U's own OTBR at channel 20
+
+Back on the MR4U's built-in OTBR (EFR32 fw 20251218 / OT 2.7.2), network
+`SLZB-d6b5` moved from channel 15 (−33 dBm background) to **20** via a
+pending-dataset change (active timestamp 2, pushed into HA's store with
+`thread/add_dataset_tlv` so the preferred dataset follows).
+
+- ESP32-C6 / ESPHome `tealight-c6-thread-sed.yaml`: attaches, HA API up in
+  35 s; **Sleepy mode on (1 s poll)** → MR4U child table `RxOnWhenIdle: 0`,
+  API reconnects within 3 s of the mode change and stays up; four HA light
+  commands (candle on/off, ring on/off) all delivered and state-verified over
+  the next 5 min. This is the first time a sleepy child has worked here.
+- nRF52840 OT CLI, same parent/channel, SED poll 500 ms: attaches (LQI 3/3),
+  8/30 pings — no longer "never", but still lossy.
+
+Reading of the whole saga: indirect delivery to sleepy children is marginal in
+this RF environment and tips from ~0 % to usable depending on channel, radio
+firmware and the child's timing. Channel 15 was the worst case for everything.
+Remaining work: soak the C6 for hours (API drops?), then the battery current
+measurement that started all this.
