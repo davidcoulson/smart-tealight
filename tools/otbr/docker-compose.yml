@@ -1,0 +1,38 @@
+# OpenThread Border Router on a Linux box with a USB RCP (XIAO nRF52840
+# running firmware/nrf52840-rcp, or a Connect ZBT-1).
+#
+#   sudo modprobe ip6table_filter      # once; the container's firewall needs it
+#   docker compose up -d
+#
+# Set BACKBONE to the box's LAN interface (ip -br link). It must be on the same
+# L2 as Home Assistant's Matter server interface, or the router must route the
+# Thread OMR prefix (it's advertised with an RA on that interface).
+services:
+  otbr:
+    image: openthread/border-router:latest
+    container_name: otbr
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 0
+      net.ipv4.conf.all.forwarding: 1
+      net.ipv6.conf.all.forwarding: 1
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    volumes:
+      - otbr-data:/data
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      NAT64: 0
+      DNS64: 0
+      WEB_GUI: 1
+      REST_API: 1
+      BACKBONE_IF: ${BACKBONE:-eth0}
+      OT_RCP_DEVICE: spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=115200
+      OT_INFRA_IF: ${BACKBONE:-eth0}
+      OT_THREAD_IF: wpan0
+      OT_LOG_LEVEL: 5
+volumes:
+  otbr-data:
