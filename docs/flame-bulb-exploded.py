@@ -1,9 +1,9 @@
 # Generates flame-bulb-exploded.svg: side-view exploded assembly with the
 # electronics, drawn to scale (S px/mm) with exploded gaps between parts.
 S = 2.75                     # px per mm
-CX = 400                    # part centreline x
+CX = 480                    # part centreline x
 GAP = 22                     # exploded gap, mm
-W, H = 1060, 1080
+W, H = 1180, 1080
 o = []
 def a(s): o.append(s)
 def X(mm): return CX + mm*S
@@ -14,7 +14,7 @@ def text(x, y, s, size=13, anchor="start", c="#222", w="normal"):
     a(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" text-anchor="{anchor}" fill="{c}" font-weight="{w}">{s}</text>')
 def leader(from_mm_x, y_mm, label, sub="", side="r"):
     x0 = X(from_mm_x); y0 = Y(y_mm)
-    x1 = 690 if side == "r" else 110
+    x1 = 760 if side == "r" else 330
     a(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x1}" y2="{y0:.1f}" stroke="#888" stroke-width="1" stroke-dasharray="3 3"/>')
     a(f'<circle cx="{x0:.1f}" cy="{y0:.1f}" r="3" fill="#888"/>')
     text(x1 + (8 if side=="r" else -8), y0 + 4, label, 13, "start" if side=="r" else "end", "#111", "bold")
@@ -83,8 +83,8 @@ text(30, 34, "Flame bulb — exploded assembly (side view, to scale)", 20, "star
 text(30, 56, "Ø57 mm, ~154 mm tall including the E26 shell. Dashed = inside a printed part.", 12, "start", "#555")
 # assembly order strip
 steps = ["1 mains: shell → fuse → HLK-10M05", "2 PSU into base, cap closes bottom", "3 XIAO + shifter + cap into core", "4 strips on facets, ring-feed 5 V", "5 core into base socket", "6 shade over the top"]
-text(690, H-160, "Assembly order", 12, "start", "#111", "bold")
-for i, s in enumerate(steps): text(690, H-140 + i*18, s, 11, "start", "#333")
+text(760, 76, "Assembly order", 12, "start", "#111", "bold")
+for i, s in enumerate(steps): text(760, 96 + i*17, s, 11, "start", "#333")
 a(f'<line x1="{X(0):.1f}" y1="{Y(BOT-8):.1f}" x2="{X(0):.1f}" y2="{Y(sh_y+80):.1f}" stroke="#bbb" stroke-width="1" stroke-dasharray="2 6"/>')  # centreline
 svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Helvetica, Arial, sans-serif"><rect width="100%" height="100%" fill="#fff"/>' + "".join(o) + "</svg>"
 open("flame-bulb-exploded.svg", "w").write(svg)
