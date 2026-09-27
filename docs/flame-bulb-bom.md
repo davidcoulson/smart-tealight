@@ -1,6 +1,6 @@
 # Flame bulb — parts list
 
-E26, 57 mm diameter, ~154 mm tall. Body files in `hardware/flame-bulb/`
+E26, 57 mm diameter, ~140 mm tall (PSU on its side; see `psu_orientation` in the .scad for the ~131 mm Ø59 "flat" option). Body files in `hardware/flame-bulb/`
 (`flame-bulb.3mf` has all four printed parts oriented). Design notes in
 `ideas/flame-bulb.md`.
 

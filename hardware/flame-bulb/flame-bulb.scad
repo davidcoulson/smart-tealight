@@ -11,6 +11,7 @@
 //
 //   openscad --export-format binstl -D 'part="base"' -o base.stl flame-bulb.scad
 //
+// Heights: base_h is derived from psu_orientation (see below).
 // UNTESTED — dimensions from the Linkind T19 envelope, the HLK-10M05
 // datasheet and the SK6812 144/m strip. Nothing has been fitted in hand.
 //
@@ -27,9 +28,17 @@ wall      = 1.6;
 diff_wall = 1.2;
 clr       = 0.3;  // print fit clearance
 
-psu_l = 47; psu_w = 28; psu_t = 22;   // HLK-10M05, standing on its 28x22 end
-base_h    = 56;                        // chamber: psu_l upright + clearance
+psu_l = 47; psu_w = 28; psu_t = 22;   // HLK-10M05
+// How the PSU lies in the base. Diagonal must clear the chamber bore:
+//   "upright" 47 tall, 36 mm diag            base ~56 mm
+//   "side"    28 tall (on 47x22), 52 mm diag base ~41 mm   <- default, fits Ø57
+//   "flat"    22 tall (on 47x28), 55 mm diag base ~33 mm, needs base_od 59
+psu_orientation = "side";
+psu_h   = psu_orientation == "upright" ? psu_l : psu_orientation == "side" ? psu_w : psu_t;
+base_od = psu_orientation == "flat" ? 59 : od;
 cap_h     = 5;
+top_plate = 8;                         // top face: 6 mm blind socket for the core + 2 mm floor
+base_h    = psu_h + 1 + (cap_h - wall) + top_plate;   // module + clearance + cap plug + plate
 // E26 base, two options:
 //   "plug"  : male pigtail adapter (threaded shell on a bakelite body, two
 //             leads, e.g. BLLNDX / Sports Imports "E26 socket adapter pigtail").
@@ -59,7 +68,7 @@ shade_h   = 78;   // one-piece shade: tube + closed top
 shade_cap = 1.6;  // thickness of the closed end
 plug_h    = 4;
 
-chamber_d = od - 2*wall;               // 53.8
+chamber_d = base_od - 2*wall;
 spigot_d  = od - 2*diff_wall - 2*clr;  // diffuser slides over this
 
 $fn = 160;
@@ -69,16 +78,16 @@ $fn = 160;
 module base() {
   difference() {
     union() {
-      cylinder(d = od, h = base_h - plug_h);
+      cylinder(d = base_od, h = base_h - plug_h);
       translate([0, 0, base_h - plug_h]) cylinder(d = spigot_d, h = plug_h);
     }
-    // PSU chamber, open to the bottom face
-    translate([0, 0, -1]) cylinder(d = chamber_d, h = base_h - wall + 1);
-    // hex socket for the core foot, in the top face
+    // PSU chamber, open to the bottom face, up to the top plate
+    translate([0, 0, -1]) cylinder(d = chamber_d, h = base_h - top_plate + 1);
+    // blind socket for the core foot (2 mm floor so the core cannot drop through)
     translate([0, 0, base_h - foot_h])
       cylinder(r = core_r + clr, h = foot_h + 1, $fn = n_facets);
-    // low-voltage wires up into the core
-    translate([0, 0, base_h - wall - 2]) cylinder(d = 8, h = 10);
+    // low-voltage wires up through the plate into the core bore
+    translate([0, 0, base_h - top_plate - 1]) cylinder(d = 8, h = top_plate + 2);
     // lip the bottom cap presses into
     translate([0, 0, -0.01]) cylinder(d = chamber_d + 2*clr, h = cap_h);
   }
@@ -87,7 +96,7 @@ module base() {
 // ----------------------------------------------------------------- cap --
 module cap() {
   union() {
-    cylinder(d = od, h = wall);                       // flange, sits flush
+    cylinder(d = base_od, h = wall);                  // flange, sits flush
     translate([0, 0, wall])
       cylinder(d = chamber_d - clr, h = cap_h - wall); // press-in plug
     if (e26_style == "plug")

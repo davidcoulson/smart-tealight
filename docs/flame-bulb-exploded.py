@@ -3,7 +3,7 @@
 S = 2.75                     # px per mm
 CX = 480                    # part centreline x
 GAP = 22                     # exploded gap, mm
-W, H = 1180, 1080
+W, H = 1180, 1040
 o = []
 def a(s): o.append(s)
 def X(mm): return CX + mm*S
@@ -44,15 +44,14 @@ leader(-28.5, y+13, "fuse 1 A slow-blow, in the E26 lead", "heat-shrunk, tucked 
 y += 17.4 + GAP
 # ---- base with PSU ----
 base_y = y
-rect(0, 57, y, 52, "#4a4a4a")                        # body
-rect(0, 54, y+52, 4, "#4a4a4a")                      # spigot
-rect(0, 28, y+3, 47, "#2b6cb0", "#8fc1ff", "5 3", 0.9)   # HLK-10M05 upright (dashed = inside)
-text(X(0), Y(y+26)+4, "HLK-10M05", 11, "middle", "#fff", "bold")
-text(X(0), Y(y+20)+4, "AC → 5 V 2 A", 10, "middle", "#dbeafe")
-rect(0, 28, y+48, 4, "#4a4a4a", "#8fc1ff", "5 3", 0.0)   # spacer (invisible)
-leader(28.5, y+30, "base  (PC-FR)", "open bottom: PSU drops in, cap closes it")
-leader(-14, y+52, "hex socket + wire hole in the top face", "5 V / GND / data up into the core", side="l")
-y += 56 + GAP
+rect(0, 57, y, 37.4, "#4a4a4a")                      # body (base_h 41.4 minus spigot)
+rect(0, 54, y+37.4, 4, "#4a4a4a")                    # spigot
+rect(0, 47, y+4, 28, "#2b6cb0", "#8fc1ff", "5 3", 0.9)   # HLK-10M05 on its side (dashed = inside)
+text(X(0), Y(y+20)+4, "HLK-10M05", 11, "middle", "#fff", "bold")
+text(X(0), Y(y+13)+4, "AC → 5 V 2 A, on its side", 10, "middle", "#dbeafe")
+leader(28.5, y+22, "base  (PC-FR), 41 mm", "open bottom: PSU drops in, cap closes it")
+leader(-14, y+38, "10-facet socket + wire hole in the top plate", "5 V / GND / data up into the core", side="l")
+y += 41.4 + GAP
 # ---- core with XIAO, shifter, strips ----
 core_y = y
 rect(0, 39.5, y, 70, "#e0932a")                      # mast (10 facets)
@@ -80,7 +79,7 @@ leader(28.5, y+40, "shade  (translucent PETG)", "one piece; slides down over the
 
 # title / scale
 text(30, 34, "Flame bulb — exploded assembly (side view, to scale)", 20, "start", "#111", "bold")
-text(30, 56, "Ø57 mm, ~154 mm tall including the E26 shell. Dashed = inside a printed part.", 12, "start", "#555")
+text(30, 56, "Ø57 mm, ~140 mm tall including the E26 plug. Dashed = inside a printed part.", 12, "start", "#555")
 # assembly order strip
 steps = ["1 mains: shell → fuse → HLK-10M05", "2 PSU into base, cap closes bottom", "3 XIAO + shifter + cap into core", "4 strips on facets, ring-feed 5 V", "5 core into base socket", "6 shade over the top"]
 text(760, 76, "Assembly order", 12, "start", "#111", "bold")
