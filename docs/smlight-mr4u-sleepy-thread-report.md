@@ -84,13 +84,34 @@ Same client as a **synchronized sleepy end device** (`ot csl period 500000`):
 
 Switching the client back to `ot mode rn` → attaches within seconds every time.
 
+## EFR32 firmware 20251218 (Thread RCP 2.7.2.0, SDK 2025.6.2)
+
+Re-flashed radio 1 to the older release build (`SL-OPENTHREAD/2.7.2.0_GitHub-fb0446f53;
+EFR32; Dec 18 2025`), OTBR add-on stable, same client:
+
+- sleepy child (`ot mode -`, poll 500 ms) **now attaches** and stays attached;
+  SRP registration succeeds while sleepy.
+- but delivery to the sleeping child is still poor: 50 pings to the BR's
+  ML-EID → 21 answered (42 %), RTT 70 ms – 2.7 s; RLOC similar. otbr-agent
+  still logs `Indirect tx to child … failed, attempt 1/4` on most frames, with
+  some reaching 4/4 and being dropped. The client's MAC counters show every
+  data poll ACKed (`TxAckRequested 675 / TxAcked 675`).
+- To rule out host→RCP latency, the client was rebuilt with OpenThread's
+  `OPENTHREAD_CONFIG_MAC_DATA_POLL_TIMEOUT` raised from 100 ms to 500 ms
+  (radio kept on 5× longer after a frame-pending poll): 17/50 and 20/50 —
+  **no improvement**. The queued frame is not reaching the child at all in
+  the failing cases, so this is not host-side latency.
+
+So: 3.0.1 build = sleepy children never attach; 2.7.2 build = attach, ~40 %
+delivery. Both unusable for battery Matter devices.
+
 ## Interpretation
 
 Direct transmissions to an rx-on child work; the two transmission paths that
 depend on the RCP (frame-pending / source-address-match after a data poll, and
-CSL-timed transmission) fail 100 %. Both are timing-critical at the radio, so
-either the EFR32 Thread firmware build or the ESP32 socket bridge between
-otbr-agent and the RCP is breaking them. The same radio drives the MR4U's own
+CSL-timed transmission) fail 100 % on the 3.0.1 build and ~60 % on the 2.7.2
+build. Widening the child's listen window does not help, so the frames are
+being lost between otbr-agent and the air, not arriving late. The same radio drives the MR4U's own
 OTBR, which explains config A's SRP/ML-EID failures as well.
 
 ## How to reproduce

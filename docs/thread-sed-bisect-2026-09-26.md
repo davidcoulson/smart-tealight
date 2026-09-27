@@ -220,3 +220,15 @@ Consequence: **no sleepy Thread device — ESPHome C6, Nordic Matter ICD, or a
 bare OT CLI — can work behind this radio.** Fix is a different Thread RCP
 (SMLIGHT stable firmware if it behaves, a Connect ZBT-1/SkyConnect, or an
 nRF52840 running the NCS `coprocessor` RCP sample on the HA host's USB).
+
+## 2026-09-27 — Finding 8: EFR32 fw 2.7.2 lets sleepy children attach, ~40 % delivery
+
+Radio 1 re-flashed to SMLIGHT 20251218 (SL-OPENTHREAD 2.7.2.0): the OT CLI SED
+attaches and registers SRP, but indirect delivery is 17–21 of 50 pings. Raising
+the child's `OPENTHREAD_CONFIG_MAC_DATA_POLL_TIMEOUT` to 500 ms
+(`firmware/nrf52840-otcli/overlay-polltimeout.conf`, OT built from source)
+changed nothing → not host↔RCP latency. Full write-up for SMLIGHT:
+`docs/smlight-mr4u-sleepy-thread-report.md`.
+
+Decision: the MR4U is not a usable Thread border-router radio for sleepy
+devices until SMLIGHT fixes it. Use a directly attached RCP for the tea light.
