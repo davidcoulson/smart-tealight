@@ -170,3 +170,26 @@ precedence) and the runtime half is one `esp_pm_configure()` call from an
 `on_boot` lambda — ~15 lines, no external component. `esp32_pm` from
 [PR #12325](https://github.com/esphome/esphome/pull/12325) already works, so
 this is only worth doing to drop the PR dependency.
+
+## 2026-09-27 — Finding 6: it was the border router, not the C6
+
+Retested with the nRF52840 (Nordic Matter light_bulb as sleepy ICD, then the
+same with ICD off, then a bare OpenThread CLI — `firmware/nrf52840-otcli`).
+
+- Matter build, sleepy **and** non-sleepy: attaches as CHILD, every SRP update
+  "timed out waiting on server response" (1 success in ~14), commissioner
+  never finds the node, fail-safe expires. Identical to the C6 MTD symptoms.
+- OT CLI as an rx-on MTD child of the **SLZB-MR4U** (fw v3.4.1.dev1, the only
+  router/leader, link quality 3/3):
+  - ping BR RLOC `…:0:ff:fe00:e000` → 9/10, ~30 ms, hlim 64
+  - ping BR ML-EID `…:810:effc:8ad7:1b82` (SRP server) → **2/10**, hlim 255
+  - `srp client` registration never reaches Registered.
+
+The two hop limits mean the RLOC is answered inside the OT core and the
+ML-EID by the MR4U's host IP stack; the OT→host forwarding path on the MR4U
+drops ~80 %. SRP (and therefore Matter commissioning) depends on that path.
+Findings 3–5 blaming the C6 sleepy implementation are withdrawn: the C6 FTD
+only "worked" because it happened to survive the loss.
+
+Next: run the MR4U as an RCP with the HA OTBR add-on as the border router and
+repeat the CLI test.
