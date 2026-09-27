@@ -4,8 +4,9 @@
 //   part = "base"     body + PSU chamber        PC-FR (mains inside)
 //   part = "cap"      bottom cap + E26 boss     PC-FR
 //   part = "core"     hex mast for the strips   opaque PETG
-//   part = "diffuser" outer tube                TRANSLUCENT PETG
-//   part = "top"      end cap                   translucent PETG
+//   part = "shade"    tube + closed top, ONE PIECE   TRANSLUCENT PETG
+//   part = "diffuser" outer tube alone          } the two-piece alternative
+//   part = "top"      end cap alone             } (not used by the 3mf)
 //   part = "all"      preview (exploded = true)
 //
 //   openscad --export-format binstl -D 'part="base"' -o base.stl flame-bulb.scad
@@ -38,6 +39,8 @@ foot_h    = 6;
 
 diff_h    = 74;
 top_h     = 5;
+shade_h   = 78;   // one-piece shade: tube + closed top
+shade_cap = 1.6;  // thickness of the closed end
 plug_h    = 4;
 
 chamber_d = od - 2*wall;               // 53.8
@@ -95,6 +98,22 @@ module diffuser() {
   }
 }
 
+// --------------------------------------------------------------- shade --
+// Diffuser and top as one closed-ended tube. Print CLOSED END DOWN: the flat
+// top sits on the bed and the walls rise from it, so there is no bridge over
+// the bore and no supports. Slides down over the core onto the base spigot.
+module shade() {
+  difference() {
+    union() {
+      cylinder(d = od, h = shade_h - 2);
+      translate([0, 0, shade_h - 2]) cylinder(d1 = od, d2 = od - 4, h = 2);
+    }
+    // bore, stopping short of the top to leave the closed end
+    translate([0, 0, -1])
+      cylinder(d = od - 2*diff_wall, h = shade_h - shade_cap + 1);
+  }
+}
+
 // ----------------------------------------------------------------- top --
 module top() {
   union() {
@@ -109,7 +128,8 @@ module top() {
 
 // ------------------------------------------------------------ assembly --
 g = exploded ? 20 : 0;
-if (part == "base") base();
+if (part == "shade") shade();
+else if (part == "base") base();
 else if (part == "cap") cap();
 else if (part == "core") core();
 else if (part == "diffuser") diffuser();
@@ -119,7 +139,5 @@ else {
   color("dimgray")  translate([0, 0, -g]) cap();
   color("orange")   translate([0, 0, base_h - foot_h + g]) core();
   color("lightyellow", 0.30)
-                    translate([0, 0, base_h - plug_h + 2*g]) diffuser();
-  color("lightyellow", 0.60)
-                    translate([0, 0, base_h - plug_h + diff_h - plug_h + 3*g]) top();
+                    translate([0, 0, base_h - plug_h + 2*g]) shade();
 }
