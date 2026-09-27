@@ -30,11 +30,16 @@ clr       = 0.3;  // print fit clearance
 psu_l = 47; psu_w = 28; psu_t = 22;   // HLK-10M05, standing on its 28x22 end
 base_h    = 56;                        // chamber: psu_l upright + clearance
 cap_h     = 5;
-// E26 male pigtail plug (e.g. "E26 socket adapter pigtail", bakelite body with
-// two leads). Its body sits in a cup on the cap and is epoxied in place; the
-// leads pass up through the cup floor. Measure the plug body and set e26_body_d
-// to it + 0.5 mm; 26.5 is a typical E26 thread major diameter.
-e26_body_d = 26.5;  e26_cup_h = 12;  e26_wall = 2.5;
+// E26 base, two options:
+//   "plug"  : male pigtail adapter (threaded shell on a bakelite body, two
+//             leads, e.g. BLLNDX / Sports Imports "E26 socket adapter pigtail").
+//             Body seats in a CUP on the cap and is epoxied; leads through the
+//             floor. Measure the body: e26_body_d = diameter + 0.5.
+//   "shell" : hollow bulb-repair shell (bare threaded brass, you solder the
+//             leads to the shell and centre eyelet). Slips OVER a BOSS.
+e26_style  = "plug";
+e26_body_d = 26.5;  e26_cup_h = 12;  e26_wall = 2.5;   // plug
+e26_d      = 24;    e26_h    = 12;                      // shell boss
 
 n_facets  = 10;   // columns of strip around the mast. 10 leaves ~4.5 mm
                   // between LED and diffuser; 8 leaves ~7 mm if hotspots
@@ -85,11 +90,17 @@ module cap() {
     cylinder(d = od, h = wall);                       // flange, sits flush
     translate([0, 0, wall])
       cylinder(d = chamber_d - clr, h = cap_h - wall); // press-in plug
-    translate([0, 0, -e26_cup_h]) difference() {       // cup for the E26 plug
-      cylinder(d = e26_body_d + 2*e26_wall, h = e26_cup_h + 0.01);
-      translate([0, 0, -1]) cylinder(d = e26_body_d, h = e26_cup_h + 1 - 2);   // 2 mm floor
-      translate([0, 0, -1]) cylinder(d = 9, h = e26_cup_h + wall + 2);          // leads
-    }
+    if (e26_style == "plug")
+      translate([0, 0, -e26_cup_h]) difference() {     // cup for the E26 plug
+        cylinder(d = e26_body_d + 2*e26_wall, h = e26_cup_h + 0.01);
+        translate([0, 0, -1]) cylinder(d = e26_body_d, h = e26_cup_h + 1 - 2); // 2 mm floor
+        translate([0, 0, -1]) cylinder(d = 9, h = e26_cup_h + wall + 2);        // leads
+      }
+    else
+      translate([0, 0, -e26_h]) difference() {         // boss the hollow shell slips over
+        cylinder(d = e26_d, h = e26_h + 0.01);
+        translate([0, 0, -1]) cylinder(d = 9, h = e26_h + wall + 2);
+      }
   }
 }
 
