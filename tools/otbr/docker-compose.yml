@@ -1,12 +1,15 @@
-# OpenThread Border Router on a Linux box with a USB RCP (XIAO nRF52840
-# running firmware/nrf52840-rcp, or a Connect ZBT-1).
+# OpenThread Border Router on a Linux box with a USB RCP.
+# Default: SMLIGHT SLZB-06 (CC2652P, "Matter-over-Thread" fw 20260304, 460800 baud)
+# in USB mode. For a XIAO nRF52840 running firmware/nrf52840-rcp or a Connect
+# ZBT-1 see the alternative OT_RCP_DEVICE lines below.
 #
-#   sudo modprobe ip6table_filter      # once; the container's firewall needs it
-#   docker compose up -d
+#   ls -l /dev/serial/by-id/            # find the stick; put its path in RCP_DEV
+#   sudo modprobe ip6table_filter       # once per boot (or add to /etc/modules)
+#   RCP_DEV=/dev/serial/by-id/usb-... BACKBONE=enp3s0 docker compose up -d
 #
-# Set BACKBONE to the box's LAN interface (ip -br link). It must be on the same
-# L2 as Home Assistant's Matter server interface, or the router must route the
-# Thread OMR prefix (it's advertised with an RA on that interface).
+# BACKBONE must be the interface on the same L2 as Home Assistant's Matter
+# server (enp6s19, 10.2.4.x), otherwise the router has to route the Thread
+# prefix that this container announces with RAs on that interface.
 services:
   otbr:
     image: openthread/border-router:latest
@@ -14,25 +17,28 @@ services:
     restart: unless-stopped
     network_mode: host
     privileged: true
-    cap_add: [NET_ADMIN]
     sysctls:
       net.ipv6.conf.all.disable_ipv6: 0
       net.ipv4.conf.all.forwarding: 1
       net.ipv6.conf.all.forwarding: 1
     devices:
-      - /dev/ttyACM0:/dev/ttyACM0
+      - ${RCP_DEV:-/dev/ttyUSB0}:/dev/ttyUSB0
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - otbr-data:/data
-      - /dev/net/tun:/dev/net/tun
     environment:
+      OT_INFRA_IF: ${BACKBONE:-eth0}
+      OT_THREAD_IF: wpan0
+      # SLZB-06 / CC2652P, 460800, no flow control. If the log shows HDLC/CRC
+      # errors or "Radio not responding", append "&uart-flow-control".
+      OT_RCP_DEVICE: "spinel+hdlc+uart:///dev/ttyUSB0?uart-baudrate=460800"
+      # XIAO nRF52840 RCP (firmware/nrf52840-rcp) or ZBT-1 — USB CDC, baud ignored:
+      # OT_RCP_DEVICE: "spinel+hdlc+uart:///dev/ttyUSB0?uart-baudrate=115200"
+      OT_LOG_LEVEL: 5
       NAT64: 0
       DNS64: 0
       WEB_GUI: 1
       REST_API: 1
-      BACKBONE_IF: ${BACKBONE:-eth0}
-      OT_RCP_DEVICE: spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=115200
-      OT_INFRA_IF: ${BACKBONE:-eth0}
-      OT_THREAD_IF: wpan0
-      OT_LOG_LEVEL: 5
+      FIREWALL: 0
 volumes:
   otbr-data:
