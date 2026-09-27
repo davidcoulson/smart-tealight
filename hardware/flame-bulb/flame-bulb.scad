@@ -2,7 +2,7 @@
 // Companion to the smart tealight; see docs/ideas/flame-bulb.md.
 //
 //   part = "base"     body + PSU chamber        PC-FR (mains inside)
-//   part = "cap"      bottom cap + E26 boss     PC-FR
+//   part = "cap"      bottom cap + E26 plug cup PC-FR
 //   part = "core"     faceted mast for the strips   opaque PETG
 //   part = "shade"    tube + closed top, ONE PIECE   TRANSLUCENT PETG
 //   part = "diffuser" outer tube alone          } the two-piece alternative
@@ -30,7 +30,11 @@ clr       = 0.3;  // print fit clearance
 psu_l = 47; psu_w = 28; psu_t = 22;   // HLK-10M05, standing on its 28x22 end
 base_h    = 56;                        // chamber: psu_l upright + clearance
 cap_h     = 5;
-e26_d     = 24; e26_h = 12;            // boss the bought E26 shell slips over
+// E26 male pigtail plug (e.g. "E26 socket adapter pigtail", bakelite body with
+// two leads). Its body sits in a cup on the cap and is epoxied in place; the
+// leads pass up through the cup floor. Measure the plug body and set e26_body_d
+// to it + 0.5 mm; 26.5 is a typical E26 thread major diameter.
+e26_body_d = 26.5;  e26_cup_h = 12;  e26_wall = 2.5;
 
 n_facets  = 10;   // columns of strip around the mast. 10 leaves ~4.5 mm
                   // between LED and diffuser; 8 leaves ~7 mm if hotspots
@@ -81,9 +85,10 @@ module cap() {
     cylinder(d = od, h = wall);                       // flange, sits flush
     translate([0, 0, wall])
       cylinder(d = chamber_d - clr, h = cap_h - wall); // press-in plug
-    translate([0, 0, -e26_h]) difference() {           // E26 boss
-      cylinder(d = e26_d, h = e26_h + 0.01);
-      translate([0, 0, -1]) cylinder(d = 9, h = e26_h + wall + 2);
+    translate([0, 0, -e26_cup_h]) difference() {       // cup for the E26 plug
+      cylinder(d = e26_body_d + 2*e26_wall, h = e26_cup_h + 0.01);
+      translate([0, 0, -1]) cylinder(d = e26_body_d, h = e26_cup_h + 1 - 2);   // 2 mm floor
+      translate([0, 0, -1]) cylinder(d = 9, h = e26_cup_h + wall + 2);          // leads
     }
   }
 }

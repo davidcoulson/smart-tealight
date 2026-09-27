@@ -29,16 +29,18 @@ y = BOT
 e26_y = y
 rect(0, 26, y, 22, "#c9c9c9", rx=3)                   # screw shell
 for i in range(4): a(f'<line x1="{X(-13):.1f}" y1="{Y(y+4+i*5):.1f}" x2="{X(13):.1f}" y2="{Y(y+4+i*5):.1f}" stroke="#888" stroke-width="1"/>')
+rect(0, 26, y+22, 8, "#3a2a1a", rx=2)                  # bakelite body above the threads
 rect(0, 8, y-6, 6, "#777", rx=3)                      # centre contact
-leader(13, y+11, "E26 bulb-repair shell", "two solder terminals; glued onto the boss")
-y += 22 + GAP
+leader(13, y+11, "E26 male pigtail plug", "threaded shell + bakelite body, two leads; epoxied into the cup")
+y += 30 + GAP
 # ---- cap ----
 cap_y = y
-rect(0, 24, y, 12, "#555")                           # boss
+rect(0, 31.5, y, 12, "#555")                         # cup for the plug
+rect(0, 26.5, y+2, 10.5, "#777", "#555", "4 2")        # plug body sits in here
 rect(0, 57, y+12, 2, "#555")                         # flange
 rect(0, 53, y+14, 3.4, "#555")                       # press-in plug
-leader(12, y+6, "cap  (PC-FR)", "E26 boss + press-in plug; mains wires pass through")
-leader(-28, y+13, "fuse 1 A slow-blow, in the E26 lead", "heat-shrunk, tucked in the cap", side="l")
+leader(16, y+6, "cap  (PC-FR)", "cup captures the E26 plug; leads pass through the floor")
+leader(-28.5, y+13, "fuse 1 A slow-blow, in the E26 lead", "heat-shrunk, tucked in the cap", side="l")
 y += 17.4 + GAP
 # ---- base with PSU ----
 base_y = y
