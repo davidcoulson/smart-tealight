@@ -15,8 +15,9 @@ Wi-Fi is fine — or Thread for consistency), different body:
 * **LEDs: SK6812 RGBWW, 144/m, 5 V** (RGB + warm-white die, 7 mm pitch).
   Chosen over WS2805 (RGB+CCT) because WS2805 tops out at 60/m — too coarse
   for flicker — and the dense FCOB WS2805 has one IC per 71 mm. Cool white
-  isn't needed for a flame. Six vertical columns of ~12 px around a Ø30
-  printed core, LEDs facing out; XIAO inside the core. Worst-case white
+  isn't needed for a flame. Ten vertical columns of 10 px (the strip is 12 mm wide; a 10-sided
+  mast with 12.2 mm facets leaves ~4.5 mm to the diffuser) — 100 px, XIAO
+  inside the core. Body in `hardware/flame-bulb/`. Worst-case white
   ~4 A → cap brightness at ~35 % in firmware. Same reel as the tea light's
   strip option.
 * **Power:** 5 V from a **Hi-Link HLK-10M05** (5 V 2 A, 47 × 28 × 22 mm,

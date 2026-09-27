@@ -3,7 +3,7 @@
 //
 //   part = "base"     body + PSU chamber        PC-FR (mains inside)
 //   part = "cap"      bottom cap + E26 boss     PC-FR
-//   part = "core"     hex mast for the strips   opaque PETG
+//   part = "core"     faceted mast for the strips   opaque PETG
 //   part = "shade"    tube + closed top, ONE PIECE   TRANSLUCENT PETG
 //   part = "diffuser" outer tube alone          } the two-piece alternative
 //   part = "top"      end cap alone             } (not used by the 3mf)
@@ -32,9 +32,16 @@ base_h    = 56;                        // chamber: psu_l upright + clearance
 cap_h     = 5;
 e26_d     = 24; e26_h = 12;            // boss the bought E26 shell slips over
 
-core_f2f  = 30;   // hex flat-to-flat -> six 17.3 mm facets for 10 mm strip
-core_h    = 70;   // 10 px per column at 6.94 mm pitch = 60 px total
-core_bore = 22;   // XIAO + wiring
+n_facets  = 10;   // columns of strip around the mast. 10 leaves ~4.5 mm
+                  // between LED and diffuser; 8 leaves ~7 mm if hotspots
+                  // show; 12 does not fit. One number to change.
+strip_w   = 12;   // BTF SK6812 144/m strip is 12 mm wide
+facet_w   = strip_w + 0.2;                        // strips are cut segments,
+                                                  // they only need to seat
+core_r    = facet_w / (2 * sin(180 / n_facets));  // polygon circumradius
+core_f2f  = 2 * core_r * cos(180 / n_facets);     // 37.5 mm for 10 x 12.2
+core_h    = 70;   // 10 px per column at 6.94 mm pitch -> 100 px total
+core_bore = core_f2f - 8;                         // 4 mm walls; XIAO inside
 foot_h    = 6;
 
 diff_h    = 74;
@@ -60,7 +67,7 @@ module base() {
     translate([0, 0, -1]) cylinder(d = chamber_d, h = base_h - wall + 1);
     // hex socket for the core foot, in the top face
     translate([0, 0, base_h - foot_h])
-      cylinder(d = core_f2f + 2*clr, h = foot_h + 1, $fn = 6);
+      cylinder(r = core_r + clr, h = foot_h + 1, $fn = n_facets);
     // low-voltage wires up into the core
     translate([0, 0, base_h - wall - 2]) cylinder(d = 8, h = 10);
     // lip the bottom cap presses into
@@ -84,9 +91,9 @@ module cap() {
 // ---------------------------------------------------------------- core --
 module core() {
   difference() {
-    cylinder(d = core_f2f, h = core_h, $fn = 6);
+    cylinder(r = core_r, h = core_h, $fn = n_facets);
     translate([0, 0, -1]) cylinder(d = core_bore, h = core_h + 2);
-    translate([-core_f2f, -3, foot_h]) cube([2*core_f2f, 6, 9]); // wire slot
+    translate([-2*core_r, -3, foot_h]) cube([4*core_r, 6, 9]); // wire slot
   }
 }
 
