@@ -1,3 +1,7 @@
+> **2026-09-27, later: DO NOT FILE.** The same failure reproduces with an SLZB-06
+> (CC2652P) over USB on a separate Linux OTBR — see Finding 9 in
+> `thread-sed-bisect-2026-09-26.md`. The MR4U is not the cause.
+
 # SLZB-MR4U: Thread sleepy end devices cannot attach (indirect / CSL tx fails)
 
 Report for SMLIGHT support — 2026-09-27.

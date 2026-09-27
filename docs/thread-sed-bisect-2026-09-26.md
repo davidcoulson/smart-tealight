@@ -232,3 +232,37 @@ changed nothing → not host↔RCP latency. Full write-up for SMLIGHT:
 
 Decision: the MR4U is not a usable Thread border-router radio for sleepy
 devices until SMLIGHT fixes it. Use a directly attached RCP for the tea light.
+
+## 2026-09-27 — Finding 9: reproduced with a third, USB-attached radio → not the border router
+
+OTBR (`openthread/border-router` Docker, `tools/otbr/`) on a Radxa Zero 3 with
+an **SLZB-06 (CC2652P, SMLIGHT Thread fw 20260304) over USB** — no ESP32
+bridge in the path, `TxErrCca 0`. Same nRF52840 CLI child, same network
+(`ha-thread-c912`), later moved to channel 25 (energy scan −61 dBm vs −33 dBm
+on 15): identical behaviour. Parent log per poll:
+
+```
+DataPollHandlr: Rx data poll, src:0x2402, qed_msgs:1, rss:-76, ack-fp:1
+Mac: Frame tx attempt 1/1 failed, error:NoAck, len:126, dst:<child ext addr>, sec:yes   (+14 ms)
+DataPollHandlr: Indirect tx to child 2402 failed, attempt 1/4
+```
+
+Over one 30 s window: parent 17 unACKed indirect frames; child MAC counters
+`RxErrNoFrame 1, RxErrOther 1, RxData 11` — the frames are not being aborted,
+the child's receiver simply is not listening ~14 ms after its own poll. It does
+catch one occasionally (attached once on ch 25), which looks like a race on
+the child's RX turn-on after the poll ACK — and would explain why the slower
+MR4U 2.7.2 path scored ~40 % while faster paths score ~0 %.
+
+Withdraws Findings 6–8's conclusion that the MR4U is at fault. The SMLIGHT
+report (`docs/smlight-mr4u-sleepy-thread-report.md`) must not be filed as-is.
+
+Open experiments: (a) ESP32-C6 ESPHome SED against the same OTBR — flashed
+but crash-looped on `esp_openthread_auto_start` (ESP_FAIL) with the new
+dataset, not yet debugged; (b) nRF52840 CLI without MPSL
+(`overlay-nompsl.conf`) — fails to link; (c) the same child against a
+known-good commercial BR (Apple TV "Great-Room" is on the LAN) would settle
+child-vs-environment.
+
+Decision (user): MR4U back to running its own OTBR; HA OTBR add-on stopped and
+set to manual boot.
