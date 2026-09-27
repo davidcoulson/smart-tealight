@@ -16,11 +16,7 @@ services:
     container_name: otbr
     restart: unless-stopped
     network_mode: host
-    privileged: true
-    sysctls:
-      net.ipv6.conf.all.disable_ipv6: 0
-      net.ipv4.conf.all.forwarding: 1
-      net.ipv6.conf.all.forwarding: 1
+    privileged: true   # (docker refuses `sysctls:` with host networking; the entrypoint sets forwarding itself)
     devices:
       - ${RCP_DEV:-/dev/ttyUSB0}:/dev/ttyUSB0
       - /dev/net/tun:/dev/net/tun
