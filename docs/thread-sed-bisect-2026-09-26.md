@@ -193,3 +193,30 @@ only "worked" because it happened to survive the loss.
 
 Next: run the MR4U as an RCP with the HA OTBR add-on as the border router and
 repeat the CLI test.
+
+## 2026-09-27 — Finding 7: the MR4U's Thread radio can't deliver to sleepy children
+
+Moved the border router to the HA **OTBR add-on** (3.2.0) with the SLZB-MR4U's
+EFR32MG26 as a network RCP (`10.2.4.5:6638`, SMLIGHT "Matter-over-Thread" dev
+firmware 20260416). New network `ha-thread-c912`. Same nRF52840 OT CLI child,
+link quality 3/3 both ways:
+
+| child mode | attach | ping BR RLOC | ping BR ML-EID | SRP |
+|---|---|---|---|---|
+| MED (`rn`, rx-on)      | yes | 18/20 | 13/20 | **Registered** in <8 s |
+| SED (`-`, poll 500 ms) | never — stays detached | — | — | — |
+| SSED (CSL 500 ms)      | never | — | — | — |
+
+The add-on log shows why: for the sleepy child the BR queues the Child ID
+Response and then logs `DataPollHandlr: Indirect tx to child 7001 failed,
+attempt 1/4 … 4/4` on every poll; with CSL it is `CslTxScheduler: CSL tx to
+7001 failed, attempt 1/4 … 4/4`. Direct transmissions (rx-on child) work.
+Indirect and CSL delivery both rely on RCP radio-firmware features (source
+address match / frame-pending, CSL tx scheduling); direct tx does not. So the
+sleepy failure is in the MR4U's EFR32 RCP firmware, and it also explains
+Findings 3–6 (the MR4U's own OTBR used the same radio).
+
+Consequence: **no sleepy Thread device — ESPHome C6, Nordic Matter ICD, or a
+bare OT CLI — can work behind this radio.** Fix is a different Thread RCP
+(SMLIGHT stable firmware if it behaves, a Connect ZBT-1/SkyConnect, or an
+nRF52840 running the NCS `coprocessor` RCP sample on the HA host's USB).
