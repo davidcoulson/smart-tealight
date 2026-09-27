@@ -1,0 +1,15 @@
+# XIAO nRF54L15, no bootloader. Same tail layout as Nordic's nrf54l15dk file
+# (factory_data + settings_storage at the top of the 1524 KB RRAM), with the
+# app occupying everything below instead of MCUboot + slots.
+app:
+  address: 0x0
+  region: flash_primary
+  size: 0x172000
+factory_data:
+  address: 0x172000
+  region: flash_primary
+  size: 0x1000
+settings_storage:
+  address: 0x173000
+  region: flash_primary
+  size: 0xA000
