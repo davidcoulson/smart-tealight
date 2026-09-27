@@ -1,0 +1,16 @@
+softdevice_reserved:
+  address: 0
+  size: 159744
+app:
+  address: 159744
+  size: 802816
+settings_storage:
+  address: 966656
+  size: 32768
+uf2_partition:
+  address: 999424
+  size: 49152
+factory_data:
+  address: 962560
+  size: 4096
+  region: flash_primary
