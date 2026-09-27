@@ -20,7 +20,7 @@ core_r     = max(core_r_min, bore/2 + 1.8);            // or bore + 1.8 mm wall
 core_f2f   = 2 * core_r * cos(180 / n_facets);
 n_px   = 15;                          // pixels per column at 6.94 mm -> 150 px total (T19 height)
 mast_h = n_px * 6.94 + 2;             // 85.3
-cap_lip = 8; spigot_h = 6;            // 8 mm of shade engagement on the lip
+cap_lip = 3; spigot_h = 6;            // short lip: retention only, the mast's top fins centre the shade
 // Shade runs right down over the cap lip, ending flush at the E26 plug (the
 // lip is sized to the shade bore; glue or friction retains it).
 shade_over_lip = true;
@@ -41,12 +41,20 @@ module cap() {
   }
 }
 
+fin_h = 8; fin_t = 1.2;               // centring fins at the mast top, out to the shade bore
 module mast() {
   difference() {
-    cylinder(r = core_r, h = mast_h, $fn = n_facets);
+    union() {
+      cylinder(r = core_r, h = mast_h, $fn = n_facets);
+      // three thin fins on facet corners reach the shade bore and centre it
+      for (a = [0, 120, 240]) rotate([0, 0, a + 18])
+        translate([0, -fin_t/2, mast_h - fin_h]) cube([od/2 - diff_wall - clr, fin_t, fin_h]);
+    }
     translate([0, 0, -1]) cylinder(d = bore, h = mast_h + 2);            // PSU + XIAO live here
     // strip power/data exit at the bottom of one facet
     translate([0, -3, spigot_h + 1]) cube([core_r + 1, 6, 8]);
+    // notch at the top for the GND ring's lead back down the bore
+    translate([-core_r - 1, -2, mast_h - 8]) cube([core_r + 1 - bore/2 + 1, 4, 9]);
     // vent slots near the top of two opposite facets (PSU makes ~3 W of heat)
     for (a = [90, 270]) rotate([0, 0, a]) translate([core_r - 4, -1.5, mast_h - 14]) cube([6, 3, 10]);
   }
