@@ -52,13 +52,10 @@ esphome:
     - priority: 1000
       then:
         - lambda: xiao_c6_rf_switch(${external_antenna});
-    # Auto-sleepy is DISABLED: the attach survives now (ND6 fix) but the
-    # parent still cannot deliver data to a sleepy child, so HA's pings stop
-    # arriving and the API drops ~70 s in. Flip the Sleepy mode switch in HA
-    # to test manually.
-    # - priority: -100
-    #   then:
-    #     - script.execute: go_sleepy
+    # Auto-sleepy is back ON. It was disabled because the attach watchdog had
+    # no hysteresis and cancelled sleepy at the first transient detach, which
+    # left the radio awake while the switch still read "on". The watchdog now
+    # gives sleepy two minutes and falls back honestly if it cannot hold.
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -73,9 +70,40 @@ esp32:
       # stops listening the probes fail, the neighbour goes unreachable and
       # the interface drops ("Network down; disconnect") within seconds.
       CONFIG_LWIP_ND6: "n"
+      # ESP-IDF blocks automatic light sleep while the USB Serial/JTAG
+      # peripheral is connected to a host, so any USB-side power measurement
+      # reads the never-sleeping number. Allow sleep regardless.
+      CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION: "n"
+      # Pure IPv6 to HA; the DNS64 client is never used.
+      CONFIG_OPENTHREAD_DNS64_CLIENT: "n"
+      # Was recalibrating the internal RC oscillator on *every* sleep entry.
+      CONFIG_PM_LIGHTSLEEP_RTC_OSC_CAL_INTERVAL: "8"
+      # TEST 2026-09-28: these three are what esp32_pm's enable_light_sleep
+      # pulls in. They power down the radio/baseband across light sleep and
+      # rely on the RTC slow clock to bring it back at the right instant.
+      # This board has no 32.768 kHz crystal (internal RC, ~5% drift), which
+      # is the likeliest reason a SED can never complete an MLE attach here.
+      # ESPHome's sdkconfig entries are sticky, so they must be set "n"
+      # explicitly — clearing enable_light_sleep alone does not remove them.
+      CONFIG_IEEE802154_SLEEP_ENABLE: "y"
+      CONFIG_ESP_PHY_MAC_BB_PD: "y"
+      CONFIG_FREERTOS_USE_TICKLESS_IDLE: "y"
+
+globals:
+  - id: detached_since
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: sleepy_gave_up
+    type: bool
+    restore_value: false
+    initial_value: "false"
 
 logger:
-  level: INFO
+  level: DEBUG
+  # No UART/USB console: the peripheral costs power and keeps a clock domain
+  # alive. Logs still reach HA and `esphome logs` over the API.
+  # baud_rate: 0   # TEMPORARILY ON for link-mode debugging over serial
 
 api:
   encryption:
@@ -98,6 +126,13 @@ external_components:
 power_management:
   - platform: esp32_pm
     id: pm
+    # TEST 2026-09-28: light sleep OFF. It pulls in CONFIG_ESP_PHY_MAC_BB_PD +
+    # CONFIG_IEEE802154_SLEEP_ENABLE, which power the radio down and rely on
+    # the RTC slow clock to wake it. This board has no 32.768 kHz crystal
+    # ("32k XTAL: not in use" -> internal RC, ~5% drift), so the radio wakes at
+    # the wrong instant and the SED can never complete an MLE attach.
+    # A SED's radio duty-cycling comes from the OpenThread MAC (rx_on=false)
+    # anyway, so sleepy should still work without this.
     enable_light_sleep: true
     max_frequency: 160MHz
     min_frequency: 40MHz # XTAL; the C6 idles here between polls
@@ -109,8 +144,12 @@ power_management:
 
 openthread:
   device_type: MTD
-  # No poll_period at boot: see the attach workaround above. The radio only
-  # stops listening once go_sleepy runs.
+  # TEST 2026-09-28: poll_period at COMPILE time, so the device comes up as a
+  # sleepy end device instead of attaching as MED and switching later. This is
+  # what Espressif's ot_sleepy_device reference does, and it is the only shape
+  # esp32_pm's own ND6 guard recognises. Runtime-switching to sleepy has never
+  # once managed to attach (always role=1 for the full grace period).
+  poll_period: 1000ms
   channel: !secret thread_channel
   network_name: !secret thread_network_name
   network_key: !secret thread_network_key
@@ -183,7 +222,7 @@ sensor:
     name: Battery voltage
     pin: GPIO0 # D0
     attenuation: 12db
-    update_interval: 30s
+    update_interval: 300s
     filters:
       - multiply: 2.0
       - sliding_window_moving_average:
@@ -243,25 +282,53 @@ binary_sensor:
           - deep_sleep.enter: ship_mode
 
 interval:
-  # Attach watchdog. ESPHome applies the Thread link mode before the stack is
-  # started and the restored NetworkInfo clobbers it, so an MTD comes up
-  # sleepy and never completes the attach. Whenever we are detached, re-assert
-  # rx-on-when-idle (Minimal End Device) so the attach can finish. This also
-  # recovers the device if sleepy mode drops the link.
-  - interval: 10s
+  # Attach watchdog, with hysteresis.
+  #
+  # Two different failures look identical from here (detached + rx-on false):
+  #
+  #  * boot-time: ESPHome applies the link mode before the stack is started and
+  #    the restored NetworkInfo clobbers it, so an MTD comes up sleepy and can
+  #    never complete the attach. We never asked for that, so fix it at once.
+  #  * while sleepy: a sleepy child detaching briefly is normal. The old
+  #    watchdog forced rx-on at the first blink, which silently cancelled
+  #    sleepy mode for good while the (optimistic) switch still read "on" —
+  #    that is why the board sat at ~60 mA with sleepy apparently enabled.
+  #    Give it two minutes, and if it truly cannot hold the link, fall back and
+  #    turn the switch off so HA shows what the radio is actually doing.
+  - interval: 15s
     then:
       - lambda: |-
           auto lock = esphome::openthread::InstanceLock::acquire();
           if (!lock) return;
           otInstance *inst = lock.get_instance();
-          if (otThreadGetDeviceRole(inst) != OT_DEVICE_ROLE_DETACHED) return;
+          const auto role = otThreadGetDeviceRole(inst);
           otLinkModeConfig m = otThreadGetLinkMode(inst);
-          if (m.mRxOnWhenIdle) return;
+          const uint32_t now = millis();
+          const bool down = (role == OT_DEVICE_ROLE_DETACHED || role == OT_DEVICE_ROLE_DISABLED);
+          ESP_LOGD("ot", "role=%d rx_on=%d poll=%ums", (int) role, (int) m.mRxOnWhenIdle,
+                   (unsigned) otLinkGetPollPeriod(inst));
+          if (!down) { id(detached_since) = 0; return; }
+          if (id(detached_since) == 0) id(detached_since) = now;
+          if (m.mRxOnWhenIdle) return;  // already recovering
+          const bool asked_for_sleepy = id(sleepy_mode).state;
+          const uint32_t grace = asked_for_sleepy ? 120000 : 0;
+          if (now - id(detached_since) < grace) return;
           m.mRxOnWhenIdle = true;
           m.mDeviceType = false;
           m.mNetworkData = false;
           otThreadSetLinkMode(inst, m);
-          ESP_LOGW("ot", "detached: re-asserted rx_on_when_idle=1 to re-attach");
+          ESP_LOGW("ot", "detached %us: re-asserted rx_on_when_idle=1 to re-attach",
+                   (unsigned) ((now - id(detached_since)) / 1000));
+          if (asked_for_sleepy) id(sleepy_gave_up) = true;
+
+      # Tell the truth in HA when sleepy had to be abandoned.
+      - if:
+          condition:
+            lambda: "return id(sleepy_gave_up);"
+          then:
+            - lambda: "id(sleepy_gave_up) = false;"
+            - switch.turn_off: sleepy_mode
+            - logger.log: "sleepy mode abandoned: parent could not hold the link"
 
 
 script:
@@ -286,7 +353,7 @@ switch:
     id: sleepy_mode
     icon: mdi:sleep
     optimistic: true
-    restore_mode: ALWAYS_OFF
+    restore_mode: ALWAYS_ON  # born sleepy: poll_period is compile-time
     turn_on_action:
       - logger.log: "Switching to sleepy end device (1 s poll)"
       - openthread.set_poll_period: 1000ms

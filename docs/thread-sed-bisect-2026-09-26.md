@@ -287,3 +287,63 @@ this RF environment and tips from ~0 % to usable depending on channel, radio
 firmware and the child's timing. Channel 15 was the worst case for everything.
 Remaining work: soak the C6 for hours (API drops?), then the battery current
 measurement that started all this.
+
+## 2026-09-28 — Finding 11: the C6 cannot attach as a sleepy end device, full stop
+
+**Finding 10 is withdrawn.** It credited sleepy mode as working because the MR4U
+once reported `RxOnWhenIdle: 0` and HA commands succeeded. Commands succeeding
+proves the *link* worked, not that the radio slept. A USB power meter settled
+it: 60 mA whether "Sleepy mode" was on or off. The radio was never asleep.
+
+Root cause of the illusion: the **attach watchdog had no hysteresis**. It fired
+on `DETACHED` and forced `rx_on_when_idle = 1` to recover the boot-time attach
+bug. Going sleepy always causes a brief detach, so the watchdog cancelled
+sleepy within seconds — and because the switch is `optimistic: true`, HA kept
+displaying "Sleepy mode: on" over an always-on radio. Serial capture:
+
+```
+[D][main]: Switching to sleepy end device (1 s poll)
+[D][openthread]: Link Mode ... RX On When Idle: FALSE     <- applied correctly
+[W][api.connection]: Home Assistant ...: Network down; disconnect
+[W][ot]: detached: re-asserted rx_on_when_idle=1 to re-attach   <- undone
+```
+
+The watchdog is now fixed (15 s tick, 120 s grace when sleepy was requested,
+0 s when it was not, and it turns the switch off when it gives up so HA stops
+lying). That exposed the real problem.
+
+### The real problem
+
+With the watchdog no longer interfering, a sleepy C6 **never re-attaches**. It
+sits at `role=1` (DETACHED) for the entire grace period, every time. Three
+configurations, all identical results:
+
+| Configuration | Result |
+|---|---|
+| runtime switch to sleepy, esp32_pm light sleep on | `role=1` for 120 s, gives up |
+| same, with `IEEE802154_SLEEP_ENABLE`, `ESP_PHY_MAC_BB_PD`, `FREERTOS_USE_TICKLESS_IDLE` all verified **off** | `role=1` for 120 s, identical |
+| **born sleepy** — `poll_period: 1000ms` at compile time, as Espressif's `ot_sleepy_device` does, `restore_mode: ALWAYS_ON` | `role=1` from boot, still detached at 90 s |
+
+As MED (`rx_on=1`) it attaches in ~1 s and is rock solid. The nRF52840 OT CLI
+attaches as a SED to this same parent on this same channel. So the parent
+accepts sleepy children; the ESP32-C6 / ESP-IDF OpenThread MTD-sleepy path is
+what does not work.
+
+Hypotheses tested and **rejected**:
+- USB Serial/JTAG blocking light sleep (`CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION`,
+  which `esp32_pm` hardcodes to `True` at power_management.py:134) — the meter
+  was on a charger, so no USB host and no enumeration.
+- Radio/baseband power-down needing a 32.768 kHz crystal (this board has none:
+  `32k XTAL: not in use`) — disabling all three symbols changed nothing.
+- Power management generally — it is not involved.
+
+### Consequence for the project
+
+ESPHome-over-Thread on the ESP32-C6 works well as a **mains/always-on** device
+and is a dead end for battery. Note also that ESPHome's API is a persistent TCP
+connection that HA polls, which is inherently hostile to a device whose inbound
+packets depend on a parent's indirect-transmission queue.
+
+The tea light's battery goal therefore rests on the **nRF54L15 + Matter** path
+(`firmware/nrf54-matter`), which has a real LFXO and ICD semantics designed for
+this. The C6 stays as the working always-on prototype until those boards land.
