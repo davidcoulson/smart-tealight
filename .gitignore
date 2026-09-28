@@ -4,3 +4,4 @@ __pycache__/
 
 # any build dir variant (build/, build-noicd/, ...)
 build*/
+*.log
