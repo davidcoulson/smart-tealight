@@ -347,3 +347,32 @@ packets depend on a parent's indirect-transmission queue.
 The tea light's battery goal therefore rests on the **nRF54L15 + Matter** path
 (`firmware/nrf54-matter`), which has a real LFXO and ICD semantics designed for
 this. The C6 stays as the working always-on prototype until those boards land.
+
+## 2026-09-28 — Finding 12: nRF54L15 commissioned into HA as a sleepy ICD ✔
+
+Seeed XIAO nRF54L15, `firmware/nrf54-matter` (Nordic light_bulb, MTD + ICD,
+1 s slow poll). Border router: HA OpenThread Border Router add-on with the
+SLZB-MR4U as network RCP, `ha-thread-c912`, channel 20.
+
+What it took, in order:
+1. Build as MTD (`OPENTHREAD_MTD` + `NORDIC_LIBRARY_MTD`) — it was an FTD and
+   came up as a ROUTER.
+2. Four `/leds` children — the XIAO has one, the app drives DK_LED1..4 → fault.
+3. `CHIP_CRYPTO_PSA_MIGRATE_DAC_PRIV_KEY=n` — KMU migration faulted at boot.
+4. Matter Server add-on: **Test DCL on** (VID 0xFFF1), **Thread dataset set**.
+5. Chip-erase between attempts — stale fabrics give `NoSharedTrustRoots`.
+6. BLE TX 0 → +8 dBm (Thread was already +8).
+7. **Pre-provision Thread over serial** (`CONFIG_OPENTHREAD_SHELL` + 8 KB shell
+   stack; `ot dataset set active <tlv>` / `ot ifconfig up` / `ot thread start`).
+   The commissioner reconnects 2 s after `connectNetwork`, before a sleepy
+   child's address is registered (`Resolving (address is unreachable)`), then
+   hangs on the dead session for 1m41s and the flow dies. Already on the mesh,
+   the device opened a CASE session to the HA host itself and HA subscribed.
+
+Evidence: `ot state` child, `ot parent` LQ 3/3, mode `-`, SRP Registered as
+`D095D21405F36EEA-000000000000000B._matter._tcp`; HA host `ping6` to the OMR
+address ~800 ms (one poll interval); HA device "Matter Light Bulb / Nordic
+Semiconductor ASA"; `light.turn_on` / `turn_off` on `light.matter_light_bulb`
+verified. Same border router, same channel, same parent — the ESP32-C6 never
+got past `role=1`. Next: current measurement on the battery path with the ICD
+polling at 1 s (the console/probe must be off for that number to mean anything).
