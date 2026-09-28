@@ -6,6 +6,16 @@
 		pwm-led1 = &pwm_led1;
 		watchdog0 = &wdt31;
 	};
+	/* The XIAO defines a single led0. Nordic's dk_buttons_and_leds builds its
+	 * LED table from the children of /leds, and Matter's AppTask drives
+	 * DK_LED1..DK_LED4, so with one child it indexes out of range and faults
+	 * at boot. Add three more children on the same physical LED (gpio2 0) —
+	 * harmless, and avoids claiming header pins D0-D10. */
+	leds {
+		led1: led_1 { gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>; label = "LED 1 (shared)"; };
+		led2: led_2 { gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>; label = "LED 2 (shared)"; };
+		led3: led_3 { gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>; label = "LED 3 (shared)"; };
+	};
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_led1: pwm_led_1 {
