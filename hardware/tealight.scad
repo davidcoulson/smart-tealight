@@ -7,32 +7,39 @@
 //
 // Render each part:  openscad -D 'part="cup"' -o cup.stl tealight.scad
 //
-// Stack (z, mm): floor 0–1 | cell 1–9.5 | perfboard 9.5–11.1 | XIAO 11.1–15.5
-//                | carrier 11.1–15.6 | LED ring 15.6–19.1 | cap cavity to 22 | top 23
+// Stack (z, mm): floor 0–1 | cell 1–10 | perfboard 10–11.6 | XIAO 11.6–15.6
+//                | carrier 11.6–15.6 | LED ring 15.6–19.1 | cap cavity to 22 | top 23
+//
+// Rev 2 (2026-10-02): od 38→40 and wall 1.0→1.6 — an 802030 cell's diagonal is
+// 36.06 mm and the old Ø36 bore did not clear it; 1.0 mm PETG walls were too
+// flexible for the cap's friction fit. cell_h 8.5→9.0 (pouch swell), paid for
+// by carrier_h 4.5→4.0 (the XIAO is 4.0 tall). Ledge tabs → a ledge ring.
+// Mechanical button removed: the XIAO nRF54L15's on-board LSM6DSO does
+// tap-to-toggle / double-tap-for-ship-mode with no hole and no switch.
 
 part = "all";
 exploded = false;
 
 // ---- dimensions -------------------------------------------------------
-od        = 38;    // tea-light standard
-wall      = 1.0;
-id        = od - 2*wall;          // 36
+od        = 40;    // Ø40: fits an 802030 cell's 36.06 mm diagonal with 1.6 mm walls; holders are 38–40
+wall      = 1.6;                  // 4 perimeters at 0.4 mm
+id        = od - 2*wall;          // 36.8
 floor_t   = 1.0;
-cell_h    = 8.5;                  // 802030 cell + swell room
+cell_h    = 9.0;                  // 802030 cell (8.0 nominal) + ~10 % lifetime swell
 perf_t    = 1.6;
 perf_d    = 34;
-ledge_z   = floor_t + cell_h;     // 9.5: perfboard rests here
+ledge_z   = floor_t + cell_h;     // 10.0: perfboard rests here
+ledge_w   = 2.0;  ledge_t = 1.5;   // perfboard ledge ring (rev 2: was three 1.5 mm tabs)
 cup_h     = 15.5;                 // cup rim
 cap_h     = 7.5;                  // cap above the rim → total 23
 skirt_h   = 2.0;                  // cap plug depth into the cup
 clr       = 0.2;                  // fit clearance
 
 ring_od   = 32;   ring_id = 18;   ring_t = 1.6;  led_h = 1.9;
-carrier_od = 34;  carrier_id = 29;  carrier_h = 4.5;
+carrier_od = 34;  carrier_id = 29;  carrier_h = 4.0;   // = XIAO height
 xiao_cut_x = 11;                  // carrier is cut away for x > this (XIAO + USB-C)
 
-usb_w = 10;  usb_z0 = 12.0;       // USB-C slot in the wall, open to the rim
-btn_d = 4;   btn_x = -14;         // floor hole for the tact switch plunger
+usb_w = 10;  usb_z0 = ledge_z + perf_t - 0.3;   // USB-C slot, from just under the XIAO's board edge up to the rim
 
 $fn = 120;
 
@@ -44,13 +51,14 @@ module cup() {
     translate([0, 0, floor_t]) cylinder(d = id, h = cup_h);
     // USB-C notch, +x side, open at the rim
     translate([id/2 - 1, -usb_w/2, usb_z0]) cube([wall + 2, usb_w, cup_h]);
-    // button plunger hole
-    translate([btn_x, 0, -1]) cylinder(d = btn_d, h = floor_t + 2);
   }
-  // three perfboard ledge tabs (none on the USB side)
-  for (a = [90, 210, 330])
-    rotate([0, 0, a])
-      translate([id/2 - 1.5, -1.5, ledge_z - 1]) cube([1.5 + 0.01, 3, 1]);
+  // perfboard ledge ring, interrupted on the USB (+x) side so the XIAO's
+  // connector and cable clear it
+  translate([0, 0, ledge_z - ledge_t]) difference() {
+    cylinder(d = id + 0.02, h = ledge_t);
+    translate([0, 0, -1]) cylinder(d = id - 2*ledge_w, h = ledge_t + 2);
+    rotate([0, 0, -40]) rotate_extrude(angle = 80) square([id, ledge_t + 2]);
+  }
 }
 
 // ---- carrier (spacer between perfboard and LED ring) --------------------
@@ -82,9 +90,9 @@ module cap() {
 
 // ---- reference geometry for the preview (not printed) -------------------
 module electronics() {
-  color("orange", 0.5) translate([-10, -15, floor_t]) cube([20, 30, 8]);                 // cell
+  color("orange", 0.5) translate([-10, -15, floor_t]) cube([20, 30, 8]);                 // 802030 cell (corners at r=18.03 < id/2=18.4)
   color("green", 0.6)  translate([0, 0, ledge_z]) cylinder(d = perf_d, h = perf_t);      // perfboard
-  color("steelblue", 0.7) translate([-5.8, -8.75, ledge_z + perf_t]) cube([21, 17.5, 4]); // XIAO
+  color("steelblue", 0.7) translate([-5.8, -8.75, ledge_z + perf_t]) cube([21, 17.5, 4]); // XIAO nRF54L15 (same outline as the C6)
   color("white", 0.8) translate([0, 0, ledge_z + perf_t + carrier_h]) difference() {     // LED ring
     cylinder(d = ring_od, h = ring_t); translate([0,0,-1]) cylinder(d = ring_id, h = ring_t + 2); }
 }
