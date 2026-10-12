@@ -100,10 +100,10 @@ globals:
     initial_value: "false"
 
 logger:
-  level: DEBUG
+  level: INFO
   # No UART/USB console: the peripheral costs power and keeps a clock domain
   # alive. Logs still reach HA and `esphome logs` over the API.
-  # baud_rate: 0   # TEMPORARILY ON for link-mode debugging over serial
+  baud_rate: 0
 
 api:
   encryption:
@@ -144,12 +144,10 @@ power_management:
 
 openthread:
   device_type: MTD
-  # TEST 2026-09-28: poll_period at COMPILE time, so the device comes up as a
-  # sleepy end device instead of attaching as MED and switching later. This is
-  # what Espressif's ot_sleepy_device reference does, and it is the only shape
-  # esp32_pm's own ND6 guard recognises. Runtime-switching to sleepy has never
-  # once managed to attach (always role=1 for the full grace period).
-  poll_period: 1000ms
+  # No poll_period: this device runs as an always-on Minimal End Device.
+  # Sleepy does not work on the C6 at all — see Finding 11 in
+  # docs/thread-sed-bisect-2026-09-26.md. The Sleepy mode switch below is kept
+  # for re-testing; it will fail over to MED after ~2 minutes.
   channel: !secret thread_channel
   network_name: !secret thread_network_name
   network_key: !secret thread_network_key
@@ -353,7 +351,7 @@ switch:
     id: sleepy_mode
     icon: mdi:sleep
     optimistic: true
-    restore_mode: ALWAYS_ON  # born sleepy: poll_period is compile-time
+    restore_mode: ALWAYS_OFF
     turn_on_action:
       - logger.log: "Switching to sleepy end device (1 s poll)"
       - openthread.set_poll_period: 1000ms
